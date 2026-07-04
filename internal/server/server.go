@@ -44,7 +44,7 @@ func (m *Manager) Start(addr string, handler http.Handler) error {
 	go func(ctx context.Context, listener net.Listener) {
 		err := m.server.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			runtime.EventsEmit(ctx, "error", err.Error())
+			runtime.EventsEmit(ctx, "proxy:error", err.Error())
 			m.mu.Lock()
 			m.server = nil
 			m.mu.Unlock()

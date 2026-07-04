@@ -67,15 +67,17 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
 
 		cert, err := p.cachedCert(host)
 		if err != nil {
+			conn.Close()
 			return
 		}
 		clientTLS := tls.Server(conn, &tls.Config{
 			Certificates: []tls.Certificate{*cert},
 		})
+		defer clientTLS.Close()
+
 		if err := clientTLS.Handshake(); err != nil {
 			return
 		}
@@ -88,7 +90,10 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		var bufReq bytes.Buffer
 		req.Body = io.NopCloser(io.TeeReader(req.Body, &bufReq))
-		req.Write(destTLS)
+		if err := req.Write(destTLS); err != nil {
+			runtime.EventsEmit(p.appCtx, "proxy:error", err.Error())
+			return
+		}
 
 		res, err := http.ReadResponse(bufio.NewReader(destTLS), req)
 		if err != nil {
@@ -98,7 +103,10 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		var bufRes bytes.Buffer
 		res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
-		res.Write(clientTLS)
+		if err := res.Write(clientTLS); err != nil {
+			runtime.EventsEmit(p.appCtx, "proxy:error", err.Error())
+			return
+		}
 
 		reqLog := requestLog{
 			Host:    req.Host,

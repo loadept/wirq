@@ -40,9 +40,7 @@ export function RequestList({
   return (
     <div class="flex flex-col flex-1 min-h-0">
       <div class="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card shrink-0">
-        <span class="text-xs uppercase text-foreground">
-          Requests: {logs.length}
-        </span>
+        <span class="text-xs text-foreground">Requests: {logs.length}</span>
         <button
           type="button"
           onClick={onClear}
@@ -53,18 +51,20 @@ export function RequestList({
         </button>
       </div>
 
-      {!connected ? (
-        <div class="flex-1 flex items-center justify-center bg-background">
-          <span class="text-xs text-center text-muted-foreground">
-            Proxy is not running
-          </span>
-        </div>
-      ) : logs.length === 0 ? (
-        <div class="flex-1 flex items-center justify-center bg-background">
-          <span class="text-xs text-center text-muted-foreground animate-pulse">
-            Waiting for requests...
-          </span>
-        </div>
+      {logs.length === 0 ? (
+        !connected ? (
+          <div class="flex-1 flex items-center justify-center bg-background">
+            <span class="text-xs text-center text-muted-foreground">
+              Proxy is not running
+            </span>
+          </div>
+        ) : (
+          <div class="flex-1 flex items-center justify-center bg-background">
+            <span class="text-xs text-center text-muted-foreground animate-pulse">
+              Waiting for requests...
+            </span>
+          </div>
+        )
       ) : (
         <div
           ref={containerRef}

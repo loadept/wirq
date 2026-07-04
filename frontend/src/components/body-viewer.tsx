@@ -112,11 +112,11 @@ function JsonViewer({ data }: { data: unknown }) {
   const formatted = JSON.stringify(data, null, 2)
   return (
     <div>
-      <div class="text-xs uppercase text-muted-foreground mb-1">
+      <div class="text-xs text-muted-foreground mb-1">
         <FileJson class="h-3 w-3 inline mr-1" />
         JSON — {formatSize(new Blob([formatted]).size)}
       </div>
-      <pre class="text-sm font-firacode whitespace-pre overflow-auto bg-background border border-border rounded p-3 max-h-[35vh]">
+      <pre class="text-sm text-foreground/80 whitespace-pre bg-background border border-border rounded p-3">
         {formatted}
       </pre>
     </div>
@@ -125,7 +125,7 @@ function JsonViewer({ data }: { data: unknown }) {
 
 function TextViewer({ text }: { text: string }) {
   return (
-    <pre class="text-sm whitespace-pre-wrap break-all overflow-auto bg-background border border-border rounded p-3 max-h-[35vh]">
+    <pre class="text-sm text-foreground/80 whitespace-pre-wrap break-all bg-background border border-border rounded p-3">
       {text}
     </pre>
   )
@@ -376,7 +376,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
   if (ct.includes("xml")) {
     return (
       <div>
-        <div class="text-xs uppercase text-muted-foreground mb-1">
+        <div class="text-xs text-muted-foreground mb-1">
           <FileCode class="h-3 w-3 inline mr-1" />
           XML — {formatSize(cleanStr.length)}
         </div>

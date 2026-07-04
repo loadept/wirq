@@ -38,7 +38,7 @@ function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
   )
 }
 
-export function MessageView({ data, type }: MessageViewProps) {
+export function PrettyView({ data, type }: MessageViewProps) {
   if (type === "request") {
     const req = data as RequestLog
     return (

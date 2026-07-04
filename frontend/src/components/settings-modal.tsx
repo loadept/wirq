@@ -45,10 +45,7 @@ export function SettingsModal({
   const dirty = JSON.stringify(config) !== JSON.stringify(initial)
 
   const handleClose = () => {
-    if (
-      dirty &&
-      !window.confirm("Tiene cambios sin guardar. ¿Descartar cambios?")
-    )
+    if (dirty && !window.confirm("You have unsaved changes. Discard changes?"))
       return
     onClose()
   }
@@ -158,9 +155,7 @@ export function SettingsModal({
           onMouseDown={handleDragStart}
           class="flex items-center justify-between px-4 py-3 border-b border-border cursor-grab active:cursor-grabbing select-none"
         >
-          <h2 class="text-sm text-foreground uppercase tracking-wider">
-            Settings
-          </h2>
+          <h2 class="text-sm text-foreground tracking-wider">Settings</h2>
           <button
             type="button"
             onClick={handleClose}
@@ -172,14 +167,14 @@ export function SettingsModal({
 
         <div class="p-4 space-y-5 overflow-y-auto max-h-[70vh]">
           <fieldset class="space-y-3">
-            <legend class="text-xs uppercase tracking-wider text-primary">
+            <legend class="text-xs tracking-wider text-primary">
               TLS Certificates
             </legend>
 
             <div>
               <label
                 htmlFor="ca-cert"
-                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
               >
                 CA Certificate (.pem)
               </label>
@@ -203,7 +198,7 @@ export function SettingsModal({
             <div>
               <label
                 htmlFor="ca-key"
-                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
               >
                 CA Key (.pem)
               </label>
@@ -228,14 +223,12 @@ export function SettingsModal({
           </fieldset>
 
           <fieldset class="space-y-3">
-            <legend class="text-xs uppercase tracking-wider text-primary">
-              Server
-            </legend>
+            <legend class="text-xs tracking-wider text-primary">Server</legend>
 
             <div>
               <label
                 htmlFor="server-host"
-                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
               >
                 Host
               </label>
@@ -261,7 +254,7 @@ export function SettingsModal({
             <div>
               <label
                 htmlFor="server-port"
-                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
               >
                 Port
               </label>
@@ -286,7 +279,7 @@ export function SettingsModal({
           </fieldset>
 
           <div class="flex items-center justify-between pt-2 border-t border-border">
-            <span class="text-xs uppercase tracking-wider text-foreground">
+            <span class="text-xs tracking-wider text-foreground">
               Appearance
             </span>
             <button

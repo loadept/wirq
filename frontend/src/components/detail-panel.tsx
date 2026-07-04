@@ -2,7 +2,7 @@ import type { ComponentChildren } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { requestToRaw, responseToRaw } from "../lib/http-format"
 import type { PanelTab, ProxyLog, ViewMode } from "../types/index"
-import { MessageView } from "./message-view"
+import { PrettyView } from "./pretty-view"
 
 interface DetailPanelProps {
   event: ProxyLog
@@ -21,7 +21,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      class={`px-3 py-1.5 text-xs uppercase tracking-wider transition-colors cursor-pointer ${
+      class={`px-3 py-1.5 text-xs tracking-wider transition-colors cursor-pointer ${
         active
           ? "text-primary border-b-2 border-b-primary"
           : "text-muted-foreground hover:text-foreground border-b-2 border-b-transparent"
@@ -34,9 +34,9 @@ function TabButton({
 
 function RawView({ content }: { content: string }) {
   return (
-    <pre class="text-sm whitespace-pre-wrap break-all">
+    <span class="text-sm text-foreground/80 whitespace-pre-wrap break-all">
       {content || "(empty)"}
-    </pre>
+    </span>
   )
 }
 
@@ -116,14 +116,16 @@ export function DetailPanel({ event }: DetailPanelProps) {
       <div class="flex-1 overflow-auto p-3">
         {tab === "request" ? (
           viewMode === "pretty" ? (
-            <MessageView data={request} type="request" />
+            <PrettyView data={request} type="request" />
           ) : (
             <RawView content={requestToRaw(request)} />
           )
-        ) : viewMode === "pretty" ? (
-          <MessageView data={response} type="response" />
         ) : (
-          <RawView content={responseToRaw(response)} />
+            viewMode === "pretty" ? (
+            <PrettyView data={response} type="response" />
+          ) : (
+            <RawView content={responseToRaw(response)} />
+          )
         )}
       </div>
     </div>

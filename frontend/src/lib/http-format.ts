@@ -12,7 +12,7 @@ function parsePath(url: string): string {
 function formatBodyRaw(body: unknown, isBase64: boolean): string {
   if (body === null || body === undefined) return ""
   if (isBase64) return "[base64 encoded]"
-  if (typeof body === "object") return JSON.stringify(body, null, 2)
+  if (typeof body === "object") return JSON.stringify(body)
   return String(body)
 }
 

@@ -1,18 +1,18 @@
-import { LoadConfig, SaveConfig, StartServer, StopServer } from '@wailsapp/app'
-import { config } from '@wailsapp/models'
-import { EventsOn } from '@wailsapp/runtime'
-import { useState, useEffect, useCallback } from 'preact/hooks'
-import { Header } from './components/header'
-import { RequestList } from './components/request-list'
-import { DetailPanel } from './components/detail-panel'
-import { SettingsModal } from './components/settings-modal'
-import { useToast } from './lib/toast'
-import type { ProxyLog, Theme } from './types/index'
+import { LoadConfig, SaveConfig, StartServer, StopServer } from "@wailsapp/app"
+import type { config } from "@wailsapp/models"
+import { EventsOn } from "@wailsapp/runtime"
+import { useCallback, useEffect, useState } from "preact/hooks"
+import { DetailPanel } from "./components/detail-panel"
+import { Header } from "./components/header"
+import { RequestList } from "./components/request-list"
+import { SettingsModal } from "./components/settings-modal"
+import { useToast } from "./lib/toast"
+import type { ProxyLog, Theme } from "./types/index"
 
 export function App() {
   const [logs, setLogs] = useState<ProxyLog[]>([])
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [theme, setTheme] = useState<Theme>('light')
+  const [theme, setTheme] = useState<Theme>("light")
   const [connected, setConnected] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [config, setConfig] = useState<config.ConfigDTO>({
@@ -20,14 +20,14 @@ export function App() {
     certKeyPath: "",
     serverHost: "",
     serverPort: 0,
-    appearance: "light"
+    appearance: "light",
   })
   const [starting, setStarting] = useState(false)
   const [shuttingDown, setShuttingDown] = useState(false)
   const toast = useToast()
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.documentElement.classList.toggle("dark", theme === "dark")
   }, [theme])
 
   useEffect(() => {
@@ -37,16 +37,18 @@ export function App() {
         setConfig(cfg)
         if (cfg.appearance) setTheme(cfg.appearance as Theme)
         if (
-          !(cfg.certPath.trim() &&
-          cfg.certKeyPath.trim() &&
-          cfg.serverHost.trim() &&
-          cfg.serverPort > 0)
+          !(
+            cfg.certPath.trim() &&
+            cfg.certKeyPath.trim() &&
+            cfg.serverHost.trim() &&
+            cfg.serverPort > 0
+          )
         ) {
           setSettingsOpen(true)
         }
       } catch (error) {
-        const message = typeof error === 'string' ? error : 'unknown error'
-        toast.addToast('error', message)
+        const message = typeof error === "string" ? error : "unknown error"
+        toast.addToast("error", message)
       }
     }
     handleLoad()
@@ -54,8 +56,8 @@ export function App() {
 
   useEffect(() => {
     if (connected) {
-      const cancel = EventsOn('proxy:log', (log: ProxyLog) => {
-        setLogs(prev => [...prev, log])
+      const cancel = EventsOn("proxy:log", (log: ProxyLog) => {
+        setLogs((prev) => [...prev, log])
       })
       return () => cancel()
     }
@@ -85,10 +87,10 @@ export function App() {
         await StopServer()
         setConnected(false)
       }
-      toast.addToast('success', 'Settings saved')
+      toast.addToast("success", "Settings saved")
     } catch (error) {
-      const message = typeof error === 'string' ? error : 'unknown error'
-      toast.addToast('error', message)
+      const message = typeof error === "string" ? error : "unknown error"
+      toast.addToast("error", message)
     }
   }
 
@@ -102,10 +104,10 @@ export function App() {
     try {
       await StartServer(config)
       setConnected(true)
-      toast.addToast('success', 'Proxy started')
+      toast.addToast("success", "Proxy started")
     } catch (error) {
-      const message = typeof error === 'string' ? error : 'unknown error'
-      toast.addToast('error', `Failed to start proxy: ${message}`)
+      const message = typeof error === "string" ? error : "unknown error"
+      toast.addToast("error", `Failed to start proxy: ${message}`)
     } finally {
       setStarting(false)
     }
@@ -116,20 +118,20 @@ export function App() {
     try {
       await StopServer()
       setConnected(false)
-      toast.addToast('info', 'Proxy stopped')
+      toast.addToast("info", "Proxy stopped")
     } catch (error) {
-      const message = typeof error === 'string' ? error : 'unknown error'
-      toast.addToast('error', `Failed to stop proxy: ${message}`)
+      const message = typeof error === "string" ? error : "unknown error"
+      toast.addToast("error", `Failed to stop proxy: ${message}`)
     } finally {
       setShuttingDown(false)
     }
   }
 
   const selectedLog =
-    selectedIndex !== null ? logs[selectedIndex] ?? null : null
+    selectedIndex !== null ? (logs[selectedIndex] ?? null) : null
 
   return (
-    <div class='flex flex-col h-screen bg-background text-foreground'>
+    <div class="flex flex-col h-screen bg-background text-foreground">
       <Header
         port={config.serverPort}
         connected={connected}
@@ -151,7 +153,9 @@ export function App() {
         <SettingsModal
           initial={config}
           onSave={handleSave}
-          onToggleTheme={() => setTheme((prev: Theme) => prev === 'dark' ? 'light' : 'dark')}
+          onToggleTheme={() =>
+            setTheme((prev: Theme) => (prev === "dark" ? "light" : "dark"))
+          }
           onClose={handleClose}
         />
       )}

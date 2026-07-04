@@ -22,7 +22,7 @@ export interface ProxyLog {
   response: ResponseLog
 }
 
-export type Theme = 'dark' | 'light'
-export type ViewMode = 'pretty' | 'raw'
-export type PanelTab = 'request' | 'response'
-export type ToastType = 'error' | 'success' | 'info'
+export type Theme = "dark" | "light"
+export type ViewMode = "pretty" | "raw"
+export type PanelTab = "request" | "response"
+export type ToastType = "error" | "success" | "info"

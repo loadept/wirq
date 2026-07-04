@@ -1,8 +1,8 @@
-import { render } from 'preact'
-import { ToastProvider } from './lib/toast'
-import { App } from './app'
+import { render } from "preact"
+import { App } from "./app"
+import { ToastProvider } from "./lib/toast"
 
-const root = document.getElementById('app')
+const root = document.getElementById("app")
 if (root) {
   render(
     <ToastProvider>

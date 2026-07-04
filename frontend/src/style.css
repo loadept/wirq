@@ -1,16 +1,16 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @font-face {
-  font-family: 'geist-mono';
-  src: url('/fonts/geist-mono.woff2') format('woff2-variations');
+  font-family: "geist-mono";
+  src: url("/fonts/geist-mono.woff2") format("woff2-variations");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'firacode';
-  src: url('/fonts/firacode.woff2') format('woff2');
+  font-family: "firacode";
+  src: url("/fonts/firacode.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -19,13 +19,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: 'geist-mono';
+  font-family: "geist-mono";
   font-weight: 400;
   font-size: 17px;
   scrollbar-gutter: stable;
 
-  --font-mono: 'geist-mono';
-  --font-firacode: 'firacode';
+  --font-mono: "geist-mono";
+  --font-firacode: "firacode";
 
   --background: #f8f7f4;
   --foreground: #2c2c2c;
@@ -180,13 +180,25 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-10px); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 .animate-fade-in {
@@ -201,16 +213,17 @@ button {
   outline: none;
 }
 
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-input[type='number'] {
+input[type="number"] {
   -moz-appearance: textfield;
 }
 
-pre, code {
+pre,
+code {
   font-family: var(--font-firacode);
 }

@@ -1,4 +1,4 @@
-import { Play, Square, Settings, Loader } from "lucide-preact"
+import { Loader, Play, Settings, Square } from "lucide-preact"
 import { ConnectionStatus } from "./connection-status"
 
 interface HeaderProps {
@@ -26,10 +26,10 @@ export function Header({
 
       <div class="flex justify-center gap-2">
         <button
+          type="button"
           onClick={connected ? onShutdown : onStart}
           disabled={starting || shuttingDown}
-          class={
-            `flex items-center justify-center gap-1 min-w-25 px-2.5 py-1 text-xs rounded transition-all duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-auto enabled:hover:opacity-90 ${
+          class={`flex items-center justify-center gap-1 min-w-25 px-2.5 py-1 text-xs rounded transition-all duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-auto enabled:hover:opacity-90 ${
             connected
               ? " bg-destructive text-destructive-foreground"
               : "bg-primary text-primary-foreground"
@@ -47,24 +47,23 @@ export function Header({
                 Shutdown
               </>
             )
+          ) : starting ? (
+            <>
+              <Loader class="h-3 w-3 animate-spin" />
+              Starting
+            </>
           ) : (
-            starting ? (
-              <>
-                <Loader class="h-3 w-3 animate-spin" />
-                Starting
-              </>
-            ) : (
-              <>
-                <Play class="h-3 w-3" />
-                Start
-              </>
-            )
+            <>
+              <Play class="h-3 w-3" />
+              Start
+            </>
           )}
         </button>
       </div>
 
       <div class="flex justify-end">
         <button
+          type="button"
           onClick={onSettings}
           class="p-1.5 text-foreground hover:text-accent transition-colors cursor-pointer"
           title="Settings"

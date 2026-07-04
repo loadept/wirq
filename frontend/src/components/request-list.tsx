@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'preact/hooks'
-import { RequestRow } from './request-row'
-import type { ProxyLog } from '../types/index'
-import { BrushCleaning } from 'lucide-preact'
+import { BrushCleaning } from "lucide-preact"
+import { useEffect, useRef } from "preact/hooks"
+import type { ProxyLog } from "../types/index"
+import { RequestRow } from "./request-row"
 
 interface RequestListProps {
   connected: boolean
@@ -24,7 +24,7 @@ export function RequestList({
 
   useEffect(() => {
     if (autoScroll.current && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+      bottomRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [logs.length])
 
@@ -44,6 +44,7 @@ export function RequestList({
           Requests: {logs.length}
         </span>
         <button
+          type="button"
           onClick={onClear}
           class="flex items-center gap-1 px-3 py-1.5 border border-border rounded text-xs text-foreground hover:bg-muted transition-colors cursor-pointer"
         >
@@ -58,30 +59,28 @@ export function RequestList({
             Proxy is not running
           </span>
         </div>
+      ) : logs.length === 0 ? (
+        <div class="flex-1 flex items-center justify-center bg-background">
+          <span class="text-xs text-center text-muted-foreground animate-pulse">
+            Waiting for requests...
+          </span>
+        </div>
       ) : (
-        logs.length === 0 ? (
-          <div class="flex-1 flex items-center justify-center bg-background">
-            <span class="text-xs text-center text-muted-foreground animate-pulse">
-              Waiting for requests...
-            </span>
-          </div>
-        ) : (
-          <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            class="flex-1 overflow-y-auto overflow-x-hidden bg-background"
-          >
-            {logs.map((event, i) => (
-              <RequestRow
-                key={i}
-                event={event}
-                selected={selectedIndex === i}
-                onClick={() => onSelect(i)}
-              />
-            ))}
-            <div ref={bottomRef} />
-          </div>
-        )
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          class="flex-1 overflow-y-auto overflow-x-hidden bg-background"
+        >
+          {logs.map((event, i) => (
+            <RequestRow
+              key={i}
+              event={event}
+              selected={selectedIndex === i}
+              onClick={() => onSelect(i)}
+            />
+          ))}
+          <div ref={bottomRef} />
+        </div>
       )}
     </div>
   )

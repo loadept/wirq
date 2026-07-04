@@ -1,4 +1,4 @@
-import type { RequestLog, ResponseLog } from '../types/index'
+import type { RequestLog, ResponseLog } from "../types/index"
 
 function parsePath(url: string): string {
   try {
@@ -10,9 +10,9 @@ function parsePath(url: string): string {
 }
 
 function formatBodyRaw(body: unknown, isBase64: boolean): string {
-  if (body === null || body === undefined) return ''
-  if (isBase64) return '[base64 encoded]'
-  if (typeof body === 'object') return JSON.stringify(body, null, 2)
+  if (body === null || body === undefined) return ""
+  if (isBase64) return "[base64 encoded]"
+  if (typeof body === "object") return JSON.stringify(body, null, 2)
   return String(body)
 }
 
@@ -28,11 +28,11 @@ export function requestToRaw(req: RequestLog): string {
 
   const body = formatBodyRaw(req.body, req.is_base64)
   if (body) {
-    lines.push('')
+    lines.push("")
     lines.push(body)
   }
 
-  return lines.join('\r\n')
+  return lines.join("\r\n")
 }
 
 export function responseToRaw(res: ResponseLog): string {
@@ -46,9 +46,9 @@ export function responseToRaw(res: ResponseLog): string {
 
   const body = formatBodyRaw(res.body, res.isBase64)
   if (body) {
-    lines.push('')
+    lines.push("")
     lines.push(body)
   }
 
-  return lines.join('\r\n')
+  return lines.join("\r\n")
 }

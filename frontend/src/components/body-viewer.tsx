@@ -1,18 +1,17 @@
-import { useState, useEffect, useRef } from 'preact/hooks'
-import type { ComponentChild } from 'preact'
 import {
-  Eye,
   Download,
-  FileImage,
-  FileType,
-  FileArchive,
-  FileVideo,
-  FileAudio,
-  FileJson,
-  FileCode,
-  FileText,
+  Eye,
   File,
-} from 'lucide-preact'
+  FileArchive,
+  FileAudio,
+  FileCode,
+  FileImage,
+  FileJson,
+  FileType,
+  FileVideo,
+} from "lucide-preact"
+import type { ComponentChild } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 
 interface BodyViewerProps {
   body: unknown
@@ -20,7 +19,7 @@ interface BodyViewerProps {
   contentType: string
 }
 
-const TRUNCATE_SUFFIX = ' ...[truncate]'
+const TRUNCATE_SUFFIX = " ...[truncate]"
 
 function tryParseJSON(text: string): unknown {
   try {
@@ -38,34 +37,34 @@ function formatSize(bytes: number): string {
 
 function getFileLabel(contentType: string): string {
   const ct = contentType.toLowerCase()
-  if (ct.startsWith('image/png')) return 'PNG Image'
-  if (ct.startsWith('image/jpeg')) return 'JPEG Image'
-  if (ct.startsWith('image/gif')) return 'GIF Image'
-  if (ct.startsWith('image/webp')) return 'WebP Image'
-  if (ct.startsWith('image/svg')) return 'SVG Image'
-  if (ct.startsWith('image/')) return 'Image'
-  if (ct === 'application/pdf') return 'PDF Document'
-  if (ct.includes('zip')) return 'ZIP Archive'
-  if (ct.includes('rar')) return 'RAR Archive'
-  if (ct.includes('tar')) return 'TAR Archive'
-  if (ct.includes('gzip') || ct.includes('gz')) return 'GZip Archive'
-  if (ct.includes('compress')) return 'Compressed Archive'
-  if (ct.startsWith('video/')) return 'Video'
-  if (ct.startsWith('audio/')) return 'Audio'
-  if (ct.includes('json')) return 'JSON'
-  if (ct.includes('html')) return 'HTML'
-  if (ct.includes('xml')) return 'XML'
-  if (ct.includes('octet-stream')) return 'Binary'
+  if (ct.startsWith("image/png")) return "PNG Image"
+  if (ct.startsWith("image/jpeg")) return "JPEG Image"
+  if (ct.startsWith("image/gif")) return "GIF Image"
+  if (ct.startsWith("image/webp")) return "WebP Image"
+  if (ct.startsWith("image/svg")) return "SVG Image"
+  if (ct.startsWith("image/")) return "Image"
+  if (ct === "application/pdf") return "PDF Document"
+  if (ct.includes("zip")) return "ZIP Archive"
+  if (ct.includes("rar")) return "RAR Archive"
+  if (ct.includes("tar")) return "TAR Archive"
+  if (ct.includes("gzip") || ct.includes("gz")) return "GZip Archive"
+  if (ct.includes("compress")) return "Compressed Archive"
+  if (ct.startsWith("video/")) return "Video"
+  if (ct.startsWith("audio/")) return "Audio"
+  if (ct.includes("json")) return "JSON"
+  if (ct.includes("html")) return "HTML"
+  if (ct.includes("xml")) return "XML"
+  if (ct.includes("octet-stream")) return "Binary"
   return contentType
 }
 
 function isPreviewable(contentType: string): boolean {
   const ct = contentType.toLowerCase()
   return (
-    ct.startsWith('image/') ||
-    ct === 'application/pdf' ||
-    ct.startsWith('video/') ||
-    ct.startsWith('audio/')
+    ct.startsWith("image/") ||
+    ct === "application/pdf" ||
+    ct.startsWith("video/") ||
+    ct.startsWith("audio/")
   )
 }
 
@@ -80,6 +79,7 @@ function ActionButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       class="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded hover:bg-muted transition-colors cursor-pointer"
     >
@@ -125,25 +125,28 @@ function JsonViewer({ data }: { data: unknown }) {
 
 function TextViewer({ text }: { text: string }) {
   return (
-    <pre class="text-sm font-firacode whitespace-pre-wrap break-all overflow-auto bg-background border border-border rounded p-3 max-h-[35vh]">
+    <pre class="text-sm whitespace-pre-wrap break-all overflow-auto bg-background border border-border rounded p-3 max-h-[35vh]">
       {text}
     </pre>
   )
 }
 
-function BinaryInfoBanner({
-  contentType,
-}: {
-  contentType: string
-}) {
+function BinaryInfoBanner({ contentType }: { contentType: string }) {
   const label = getFileLabel(contentType)
   let Icon = File
   const ct = contentType.toLowerCase()
-  if (ct.startsWith('image/')) Icon = FileImage
-  else if (ct === 'application/pdf') Icon = FileType
-  else if (ct.includes('zip') || ct.includes('rar') || ct.includes('tar') || ct.includes('gzip') || ct.includes('compress')) Icon = FileArchive
-  else if (ct.startsWith('video/')) Icon = FileVideo
-  else if (ct.startsWith('audio/')) Icon = FileAudio
+  if (ct.startsWith("image/")) Icon = FileImage
+  else if (ct === "application/pdf") Icon = FileType
+  else if (
+    ct.includes("zip") ||
+    ct.includes("rar") ||
+    ct.includes("tar") ||
+    ct.includes("gzip") ||
+    ct.includes("compress")
+  )
+    Icon = FileArchive
+  else if (ct.startsWith("video/")) Icon = FileVideo
+  else if (ct.startsWith("audio/")) Icon = FileAudio
 
   return (
     <div class="text-xs text-muted-foreground space-y-1">
@@ -167,19 +170,19 @@ function BinaryPreview({
 }) {
   const ct = contentType.toLowerCase()
 
-  if (ct.startsWith('image/')) {
+  if (ct.startsWith("image/")) {
     return (
       <div class="flex items-center justify-center bg-background border border-border rounded p-2 max-h-[35vh] overflow-auto">
         <img
           src={`data:${contentType};base64,${data}`}
           class="max-w-full max-h-[35vh] object-contain"
-          alt="Response image"
+          alt="Response content"
         />
       </div>
     )
   }
 
-  if (ct === 'application/pdf') {
+  if (ct === "application/pdf") {
     return (
       <embed
         class="w-full min-h-[35vh] border border-border rounded bg-background"
@@ -189,16 +192,21 @@ function BinaryPreview({
     )
   }
 
-  if (ct.startsWith('video/')) {
+  if (ct.startsWith("video/")) {
     return (
-      <video controls class="max-w-full max-h-[35vh] border border-border rounded">
+      // biome-ignore lint/a11y/useMediaCaption: inspecting arbitrary intercepted traffic, no transcript available
+      <video
+        controls
+        class="max-w-full max-h-[35vh] border border-border rounded"
+      >
         <source src={`data:${contentType};base64,${data}`} type={contentType} />
       </video>
     )
   }
 
-  if (ct.startsWith('audio/')) {
+  if (ct.startsWith("audio/")) {
     return (
+      // biome-ignore lint/a11y/useMediaCaption: inspecting arbitrary intercepted traffic, no transcript available
       <audio controls class="w-full">
         <source src={`data:${contentType};base64,${data}`} type={contentType} />
       </audio>
@@ -208,11 +216,7 @@ function BinaryPreview({
   return null
 }
 
-export function BodyViewer({
-  body,
-  isBase64,
-  contentType,
-}: BodyViewerProps) {
+export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
   const [showPreview, setShowPreview] = useState(false)
   const prevBodyRef = useRef(body)
   useEffect(() => {
@@ -222,7 +226,7 @@ export function BodyViewer({
     }
   }, [body])
 
-  if (body === null || body === undefined || body === '') {
+  if (body === null || body === undefined || body === "") {
     return (
       <div class="text-muted-foreground italic px-1 py-2 text-xs">
         (no body)
@@ -284,18 +288,16 @@ export function BodyViewer({
     )
   }
 
-  if (typeof body === 'object') {
+  if (typeof body === "object") {
     return <JsonViewer data={body} />
   }
 
   const str = String(body)
   const isTruncated = str.endsWith(TRUNCATE_SUFFIX)
-  const cleanStr = isTruncated
-    ? str.slice(0, -TRUNCATE_SUFFIX.length)
-    : str
+  const cleanStr = isTruncated ? str.slice(0, -TRUNCATE_SUFFIX.length) : str
   const ct = contentType.toLowerCase()
 
-  if (ct.includes('json')) {
+  if (ct.includes("json")) {
     const parsed = tryParseJSON(cleanStr)
     if (parsed !== null) {
       return <JsonViewer data={parsed} />
@@ -303,7 +305,7 @@ export function BodyViewer({
     return <TextViewer text={cleanStr} />
   }
 
-  if (ct.includes('html')) {
+  if (ct.includes("html")) {
     if (isTruncated) {
       if (!showPreview) {
         return (
@@ -371,7 +373,7 @@ export function BodyViewer({
     )
   }
 
-  if (ct.includes('xml')) {
+  if (ct.includes("xml")) {
     return (
       <div>
         <div class="text-xs uppercase text-muted-foreground mb-1">

@@ -1,7 +1,7 @@
-import { createContext } from 'preact'
-import { useContext, useState, useCallback, useRef } from 'preact/hooks'
-import type { ComponentChildren } from 'preact'
-import { ToastType } from '../types'
+import type { ComponentChildren } from "preact"
+import { createContext } from "preact"
+import { useCallback, useContext, useRef, useState } from "preact/hooks"
+import type { ToastType } from "../types"
 
 export interface Toast {
   id: number
@@ -25,7 +25,9 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
 
   const removeToast = useCallback((id: number) => {
-    setToasts((prev) => prev.map((t) => t.id === id ? { ...t, leaving: true } : t))
+    setToasts((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)),
+    )
     const timer = timers.current.get(id)
     if (timer) {
       clearTimeout(timer)
@@ -55,7 +57,7 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            class={`pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${toast.leaving ? 'animate-fade-out' : 'animate-fade-in'} ${
+            class={`pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${toast.leaving ? "animate-fade-out" : "animate-fade-in"} ${
               toast.type === "error"
                 ? "bg-destructive text-destructive-foreground"
                 : toast.type === "success"

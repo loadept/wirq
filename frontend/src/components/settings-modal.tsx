@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
-import { Moon, Sun, X } from 'lucide-preact'
-import { config } from '@wailsapp/models'
+import type { config } from "@wailsapp/models"
+import { Moon, Sun, X } from "lucide-preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 
 interface SettingsModalProps {
   initial: config.ConfigDTO
@@ -19,13 +19,17 @@ interface Errors {
 
 function validate(config: config.ConfigDTO): Errors {
   const errs: Errors = {}
-  if (!config.certPath.trim()) errs.certPath = 'Required'
-  if (!config.certKeyPath.trim()) errs.certKeyPath = 'Required'
-  if (!config.serverHost.trim()) errs.serverHost = 'Required'
-  if (!config.serverPort || config.serverPort <= 0 || config.serverPort > 65535) {
-    errs.serverPort = 'Required (1-65535)'
+  if (!config.certPath.trim()) errs.certPath = "Required"
+  if (!config.certKeyPath.trim()) errs.certKeyPath = "Required"
+  if (!config.serverHost.trim()) errs.serverHost = "Required"
+  if (
+    !config.serverPort ||
+    config.serverPort <= 0 ||
+    config.serverPort > 65535
+  ) {
+    errs.serverPort = "Required (1-65535)"
   } else if (!Number.isInteger(config.serverPort)) {
-    errs.serverPort = 'Must be a whole number'
+    errs.serverPort = "Must be a whole number"
   }
   return errs
 }
@@ -41,12 +45,22 @@ export function SettingsModal({
   const dirty = JSON.stringify(config) !== JSON.stringify(initial)
 
   const handleClose = () => {
-    if (dirty && !window.confirm('Tiene cambios sin guardar. ¿Descartar cambios?')) return
+    if (
+      dirty &&
+      !window.confirm("Tiene cambios sin guardar. ¿Descartar cambios?")
+    )
+      return
     onClose()
   }
   const dialogRef = useRef<HTMLDialogElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef({ active: false, startX: 0, startY: 0, left: 0, top: 0 })
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    left: 0,
+    top: 0,
+  })
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
 
   useEffect(() => {
@@ -65,13 +79,13 @@ export function SettingsModal({
     }
     const onMouseUp = () => {
       dragRef.current.active = false
-      document.body.style.userSelect = ''
+      document.body.style.userSelect = ""
     }
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener("mousemove", onMouseMove)
+    document.addEventListener("mouseup", onMouseUp)
     return () => {
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener("mousemove", onMouseMove)
+      document.removeEventListener("mouseup", onMouseUp)
     }
   }, [])
 
@@ -89,11 +103,14 @@ export function SettingsModal({
       left: pos?.left ?? rect.left,
       top: pos?.top ?? rect.top,
     }
-    document.body.style.userSelect = 'none'
+    document.body.style.userSelect = "none"
   }
 
   const set = (field: keyof config.ConfigDTO, value: string) => {
-    setConfig((prev) => ({ ...prev, [field]: field === 'serverPort' ? Number(value) : value }))
+    setConfig((prev) => ({
+      ...prev,
+      [field]: field === "serverPort" ? Number(value) : value,
+    }))
     setErrors((prev) => {
       const next = { ...prev }
       delete next[field]
@@ -111,6 +128,8 @@ export function SettingsModal({
   const hasErrors = Object.keys(errors).length > 0
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: drag handle, mouse-only interaction
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Escape key closes modal natively via dialog's onCancel
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
@@ -118,10 +137,23 @@ export function SettingsModal({
     >
       <dialog
         ref={dialogRef}
-        onCancel={(e) => { e.preventDefault(); handleClose() }}
-        style={pos ? { left: `${pos.left}px`, top: `${pos.top}px`, margin: 0, position: 'fixed' } : undefined}
+        onCancel={(e) => {
+          e.preventDefault()
+          handleClose()
+        }}
+        style={
+          pos
+            ? {
+                left: `${pos.left}px`,
+                top: `${pos.top}px`,
+                margin: 0,
+                position: "fixed",
+              }
+            : undefined
+        }
         class="m-auto w-full max-w-xl bg-card border border-border rounded p-0 shadow-lg open:flex open:flex-col"
       >
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handle, mouse-only interaction */}
         <div
           onMouseDown={handleDragStart}
           class="flex items-center justify-between px-4 py-3 border-b border-border cursor-grab active:cursor-grabbing select-none"
@@ -130,6 +162,7 @@ export function SettingsModal({
             Settings
           </h2>
           <button
+            type="button"
             onClick={handleClose}
             class="p-1 text-muted-foreground hover:text-accent transition-colors cursor-pointer"
           >
@@ -144,15 +177,21 @@ export function SettingsModal({
             </legend>
 
             <div>
-              <label class="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="ca-cert"
+                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 CA Certificate (.pem)
               </label>
               <input
+                id="ca-cert"
                 type="text"
                 value={config.certPath}
-                onInput={(e) => set('certPath', (e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  set("certPath", (e.target as HTMLInputElement).value)
+                }
                 class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.certPath ? 'border-destructive' : 'border-border'
+                  errors.certPath ? "border-destructive" : "border-border"
                 }`}
                 placeholder="/path/to/rootCA.pem"
               />
@@ -162,20 +201,28 @@ export function SettingsModal({
             </div>
 
             <div>
-              <label class="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="ca-key"
+                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 CA Key (.pem)
               </label>
               <input
+                id="ca-key"
                 type="text"
                 value={config.certKeyPath}
-                onInput={(e) => set('certKeyPath', (e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  set("certKeyPath", (e.target as HTMLInputElement).value)
+                }
                 class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.certKeyPath ? 'border-destructive' : 'border-border'
+                  errors.certKeyPath ? "border-destructive" : "border-border"
                 }`}
                 placeholder="/path/to/rootCA-key.pem"
               />
               {errors.certKeyPath && (
-                <p class="text-xs text-destructive mt-0.5">{errors.certKeyPath}</p>
+                <p class="text-xs text-destructive mt-0.5">
+                  {errors.certKeyPath}
+                </p>
               )}
             </div>
           </fieldset>
@@ -186,38 +233,54 @@ export function SettingsModal({
             </legend>
 
             <div>
-              <label class="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="server-host"
+                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Host
               </label>
               <input
+                id="server-host"
                 type="text"
                 value={config.serverHost}
-                onInput={(e) => set('serverHost', (e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  set("serverHost", (e.target as HTMLInputElement).value)
+                }
                 class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.serverHost ? 'border-destructive' : 'border-border'
+                  errors.serverHost ? "border-destructive" : "border-border"
                 }`}
                 placeholder="0.0.0.0"
               />
               {errors.serverHost && (
-                <p class="text-xs text-destructive mt-0.5">{errors.serverHost}</p>
+                <p class="text-xs text-destructive mt-0.5">
+                  {errors.serverHost}
+                </p>
               )}
             </div>
 
             <div>
-              <label class="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="server-port"
+                class="block text-xs uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Port
               </label>
               <input
+                id="server-port"
                 type="number"
                 value={config.serverPort}
-                onInput={(e) => set('serverPort', (e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  set("serverPort", (e.target as HTMLInputElement).value)
+                }
                 class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.serverPort ? 'border-destructive' : 'border-border'
+                  errors.serverPort ? "border-destructive" : "border-border"
                 }`}
                 placeholder="3100"
               />
               {errors.serverPort && (
-                <p class="text-xs text-destructive mt-0.5">{errors.serverPort}</p>
+                <p class="text-xs text-destructive mt-0.5">
+                  {errors.serverPort}
+                </p>
               )}
             </div>
           </fieldset>
@@ -227,29 +290,46 @@ export function SettingsModal({
               Appearance
             </span>
             <button
-              onClick={() => { onToggleTheme(); set('appearance', config.appearance === 'dark' ? 'light' : 'dark') }}
+              type="button"
+              onClick={() => {
+                onToggleTheme()
+                set(
+                  "appearance",
+                  config.appearance === "dark" ? "light" : "dark",
+                )
+              }}
               class="p-1.5 text-foreground hover:text-accent transition-colors cursor-pointer"
-              title={config.appearance === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={
+                config.appearance === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
             >
-              {config.appearance === 'dark' ? <Sun class="h-4 w-4" /> : <Moon class="h-4 w-4" />}
+              {config.appearance === "dark" ? (
+                <Sun class="h-4 w-4" />
+              ) : (
+                <Moon class="h-4 w-4" />
+              )}
             </button>
           </div>
         </div>
 
         <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
           <button
+            type="button"
             onClick={handleClose}
             class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={hasErrors}
             class={`px-4 py-1.5 text-xs transition-opacity rounded ${
               hasErrors
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-primary text-primary-foreground hover:opacity-80 cursor-pointer'
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-primary text-primary-foreground hover:opacity-80 cursor-pointer"
             }`}
           >
             Save

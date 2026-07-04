@@ -65,8 +65,8 @@ export function App() {
 
   useEffect(() => {
     if (connected) {
-      const cancel = EventsOn("error", (error: string) => {
-        toast.addToast("error", error)
+      const cancel = EventsOn("proxy:error", (error: string) => {
+        toast.addToast("error", `Proxy error: ${error}`)
       })
       return () => cancel()
     }

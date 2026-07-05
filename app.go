@@ -69,7 +69,7 @@ func (a *App) SelectCertFile() (string, error) {
 	}
 
 	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:            "Select certificate files",
+		Title:            "Select certificate file",
 		DefaultDirectory: homeDir,
 		Filters: []runtime.FileFilter{
 			{DisplayName: "PEM Files (*.pem)", Pattern: "*.pem"},

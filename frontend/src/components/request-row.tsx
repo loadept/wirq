@@ -44,7 +44,7 @@ export function RequestRow({ event, selected, onClick }: RequestRowProps) {
         selected
           ? "bg-foreground/8 border-x-3 border-x-primary"
           : "hover:bg-muted/50 border-l border-l-transparent"
-      } cursor-pointer focus-visible:ring-1 focus-visible:ring-ring`}
+      } cursor-pointer`}
     >
       {request.tls ? (
         <Lock class="h-3.5 w-3.5 text-muted-foreground shrink-0" />

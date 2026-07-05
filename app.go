@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"proxy/internal/config"
 	"proxy/internal/proxy"
 	"proxy/internal/server"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -19,15 +20,15 @@ type App struct {
 	config *config.Manager
 }
 
-func NewApp(appName string) *App {
+func NewApp(appName string) (*App, error) {
 	path, err := configPath(appName)
 	if err != nil {
-		log.Fatalf("could not resolve config path: %v", err)
+		return nil, fmt.Errorf("could not resolve config path: %v", err)
 	}
 
 	return &App{
 		config: config.New(path),
-	}
+	}, nil
 }
 
 func configPath(appName string) (string, error) {
@@ -53,12 +54,32 @@ func (a *App) shutdown(_ context.Context) {
 	a.server.Stop()
 }
 
-func (a *App) LoadConfig() (config.ConfigDTO, error) {
+func (a *App) LoadConfig() (*config.ConfigDTO, error) {
 	return a.config.Read()
 }
 
 func (a *App) SaveConfig(cfg *config.ConfigDTO) error {
 	return a.config.Write(cfg)
+}
+
+func (a *App) SelectCertFile() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not resolve user home dir: %w", err)
+	}
+
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Select certificate files",
+		DefaultDirectory: homeDir,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PEM Files (*.pem)", Pattern: "*.pem"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
 
 func (a *App) StartServer(cfg *config.ConfigDTO) error {

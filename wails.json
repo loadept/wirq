@@ -1,7 +1,8 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "wriq",
-  "outputfilename": "wriq",
+  "name": "wirq",
+  "outputfilename": "wirq",
+  "frontend:dir": "frontend",
   "frontend:install": "bun install",
   "frontend:build": "bun run build",
   "frontend:dev:watcher": "bun run dev",

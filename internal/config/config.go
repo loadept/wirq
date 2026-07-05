@@ -100,27 +100,35 @@ func (m *Manager) Write(cfg *ConfigDTO) error {
 	return nil
 }
 
-func (m *Manager) Read() (ConfigDTO, error) {
+func defaultConfig() *ConfigDTO {
+	return &ConfigDTO{
+		ServerHost: "127.0.0.1",
+		ServerPort: 3100,
+		Appearance: "light",
+	}
+}
+
+func (m *Manager) Read() (*ConfigDTO, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	content, err := os.ReadFile(m.path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return ConfigDTO{}, nil
+			return defaultConfig(), nil
 		}
-		return ConfigDTO{}, fmt.Errorf("could not read %s: %w", m.path, err)
+		return nil, fmt.Errorf("could not read %s: %w", m.path, err)
 	}
 	if len(content) == 0 {
-		return ConfigDTO{}, nil
+		return defaultConfig(), nil
 	}
 
 	var cfg fileConfig
 	if err := json.Unmarshal(content, &cfg); err != nil {
-		return ConfigDTO{}, err
+		return nil, err
 	}
 
-	data := ConfigDTO{
+	data := &ConfigDTO{
 		CertPath:    cfg.CertAuthority.CertPath,
 		CertKeyPath: cfg.CertAuthority.CertKeyPath,
 		ServerHost:  cfg.Server.Host,

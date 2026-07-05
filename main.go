@@ -2,6 +2,9 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"log"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -11,11 +14,19 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const appName = "wriq"
+const appName = "wirq"
+
+var version = "dev"
 
 func main() {
-	app := NewApp(appName)
-	err := wails.Run(&options.App{
+	fmt.Fprintf(os.Stdout, "wirq version: %s\n", version)
+
+	app, err := NewApp(appName)
+	if err != nil {
+		log.Fatalf("failed to start application: %v", err)
+	}
+
+	err = wails.Run(&options.App{
 		Title:     appName,
 		Width:     1280,
 		Height:    800,
@@ -32,6 +43,6 @@ func main() {
 		},
 	})
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatalf("failed to run wails: %v", err)
 	}
 }

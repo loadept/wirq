@@ -1,5 +1,5 @@
 import type { config } from "@wailsapp/models"
-import { Moon, Sun, X } from "lucide-preact"
+import { FolderSearch, Moon, Sun, X } from "lucide-preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 
 interface SettingsModalProps {
@@ -7,6 +7,7 @@ interface SettingsModalProps {
   onSave: (config: config.ConfigDTO) => void
   onToggleTheme: () => void
   onClose: () => void
+  onBrowseCert?: () => Promise<string | undefined>
 }
 
 interface Errors {
@@ -39,15 +40,26 @@ export function SettingsModal({
   onSave,
   onToggleTheme,
   onClose,
+  onBrowseCert,
 }: SettingsModalProps) {
+  const [closing, setClosing] = useState(false)
   const [config, setConfig] = useState<config.ConfigDTO>(initial)
   const [errors, setErrors] = useState<Errors>({})
   const dirty = JSON.stringify(config) !== JSON.stringify(initial)
 
   const handleClose = () => {
-    if (dirty && !window.confirm("You have unsaved changes. Discard changes?"))
+    if (
+      dirty &&
+      !window.confirm("You have unsaved changes. Discard changes?")
+    ) {
       return
-    onClose()
+    }
+
+    setClosing(true)
+    setTimeout(() => {
+      setClosing(false)
+      onClose()
+    }, 150)
   }
   const dialogRef = useRef<HTMLDialogElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -130,7 +142,7 @@ export function SettingsModal({
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      class={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in ${closing ? "animate-fade-out" : "animate-fade-in"}`}
     >
       <dialog
         ref={dialogRef}
@@ -148,7 +160,7 @@ export function SettingsModal({
               }
             : undefined
         }
-        class="m-auto w-full max-w-xl bg-card border border-border rounded p-0 shadow-lg open:flex open:flex-col"
+        class={`m-auto w-full max-w-xl bg-card border border-border rounded p-0 shadow-lg open:flex open:flex-col ${closing ? "animate-fade-out" : "animate-fade-in"}`}
       >
         {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handle, mouse-only interaction */}
         <div
@@ -178,18 +190,32 @@ export function SettingsModal({
               >
                 CA Certificate (.pem)
               </label>
-              <input
-                id="ca-cert"
-                type="text"
-                value={config.certPath}
-                onInput={(e) =>
-                  set("certPath", (e.target as HTMLInputElement).value)
-                }
-                class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.certPath ? "border-destructive" : "border-border"
-                }`}
-                placeholder="/path/to/rootCA.pem"
-              />
+              <div class="flex gap-2 items-start">
+                <div class="flex-1">
+                  <input
+                    id="ca-cert"
+                    type="text"
+                    value={config.certPath}
+                    onInput={(e) =>
+                      set("certPath", (e.target as HTMLInputElement).value)
+                    }
+                    class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
+                      errors.certPath ? "border-destructive" : "border-border"
+                    }`}
+                    placeholder="/path/to/rootCA.pem"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const path = await onBrowseCert?.()
+                    if (path) set("certPath", path)
+                  }}
+                  class="px-2.5 py-1.5 text-xs border border-border rounded bg-background text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+                >
+                  <FolderSearch class="h-4 w-4" />
+                </button>
+              </div>
               {errors.certPath && (
                 <p class="text-xs text-destructive mt-0.5">{errors.certPath}</p>
               )}
@@ -202,18 +228,34 @@ export function SettingsModal({
               >
                 CA Key (.pem)
               </label>
-              <input
-                id="ca-key"
-                type="text"
-                value={config.certKeyPath}
-                onInput={(e) =>
-                  set("certKeyPath", (e.target as HTMLInputElement).value)
-                }
-                class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.certKeyPath ? "border-destructive" : "border-border"
-                }`}
-                placeholder="/path/to/rootCA-key.pem"
-              />
+              <div class="flex gap-2 items-start">
+                <div class="flex-1">
+                  <input
+                    id="ca-key"
+                    type="text"
+                    value={config.certKeyPath}
+                    onInput={(e) =>
+                      set("certKeyPath", (e.target as HTMLInputElement).value)
+                    }
+                    class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
+                      errors.certKeyPath
+                        ? "border-destructive"
+                        : "border-border"
+                    }`}
+                    placeholder="/path/to/rootCA-key.pem"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const path = await onBrowseCert?.()
+                    if (path) set("certKeyPath", path)
+                  }}
+                  class="px-2.5 py-1.5 text-xs border border-border rounded bg-background text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+                >
+                  <FolderSearch class="h-4 w-4" />
+                </button>
+              </div>
               {errors.certKeyPath && (
                 <p class="text-xs text-destructive mt-0.5">
                   {errors.certKeyPath}

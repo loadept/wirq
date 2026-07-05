@@ -1,4 +1,10 @@
-import { LoadConfig, SaveConfig, StartServer, StopServer } from "@wailsapp/app"
+import {
+  LoadConfig,
+  SaveConfig,
+  SelectCertFile,
+  StartServer,
+  StopServer,
+} from "@wailsapp/app"
 import type { config } from "@wailsapp/models"
 import { EventsOn } from "@wailsapp/runtime"
 import { useCallback, useEffect, useState } from "preact/hooks"
@@ -9,7 +15,7 @@ import { SettingsModal } from "./components/settings-modal"
 import { useToast } from "./lib/toast"
 import type { ProxyLog, Theme } from "./types/index"
 
-export function App() {
+export const App = () => {
   const [logs, setLogs] = useState<ProxyLog[]>([])
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [theme, setTheme] = useState<Theme>("light")
@@ -20,7 +26,7 @@ export function App() {
     certKeyPath: "",
     serverHost: "",
     serverPort: 0,
-    appearance: "light",
+    appearance: "",
   })
   const [starting, setStarting] = useState(false)
   const [shuttingDown, setShuttingDown] = useState(false)
@@ -36,14 +42,7 @@ export function App() {
         const cfg = await LoadConfig()
         setConfig(cfg)
         if (cfg.appearance) setTheme(cfg.appearance as Theme)
-        if (
-          !(
-            cfg.certPath.trim() &&
-            cfg.certKeyPath.trim() &&
-            cfg.serverHost.trim() &&
-            cfg.serverPort > 0
-          )
-        ) {
+        if (!(cfg.certPath.trim() && cfg.certKeyPath.trim())) {
           setSettingsOpen(true)
         }
       } catch (error) {
@@ -98,6 +97,15 @@ export function App() {
     setTheme(config.appearance as Theme)
     setSettingsOpen(false)
   }, [config.appearance])
+
+  const handleBrowseCert = async () => {
+    try {
+      return await SelectCertFile()
+    } catch (error) {
+      const message = typeof error === "string" ? error : "unknown error"
+      toast.addToast("error", message)
+    }
+  }
 
   const handleStart = async () => {
     setStarting(true)
@@ -157,6 +165,7 @@ export function App() {
             setTheme((prev: Theme) => (prev === "dark" ? "light" : "dark"))
           }
           onClose={handleClose}
+          onBrowseCert={handleBrowseCert}
         />
       )}
     </div>

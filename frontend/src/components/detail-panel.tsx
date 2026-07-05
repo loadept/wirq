@@ -120,12 +120,10 @@ export function DetailPanel({ event }: DetailPanelProps) {
           ) : (
             <RawView content={requestToRaw(request)} />
           )
+        ) : viewMode === "pretty" ? (
+          <PrettyView data={response} type="response" />
         ) : (
-            viewMode === "pretty" ? (
-            <PrettyView data={response} type="response" />
-          ) : (
-            <RawView content={responseToRaw(response)} />
-          )
+          <RawView content={responseToRaw(response)} />
         )}
       </div>
     </div>

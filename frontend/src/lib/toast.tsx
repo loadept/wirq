@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact"
-import { createContext } from "preact"
+import { createContext, h as jsx } from "preact"
 import { useCallback, useContext, useRef, useState } from "preact/hooks"
 import type { ToastType } from "../types"
 
@@ -50,26 +50,35 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
     [removeToast],
   )
 
-  return (
-    <ToastContext.Provider value={{ addToast }}>
-      {children}
-      <div class="fixed top-26 right-4 z-9999 flex flex-col gap-2 pointer-events-none">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            class={`pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${toast.leaving ? "animate-fade-out" : "animate-fade-in"} ${
+  return jsx(
+    ToastContext.Provider,
+    { value: { addToast } },
+    children,
+    jsx(
+      "div",
+      {
+        class:
+          "fixed top-26 right-4 z-9999 flex flex-col gap-2 pointer-events-none",
+      },
+      toasts.map((toast) =>
+        jsx(
+          "div",
+          {
+            key: toast.id,
+            class: `pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${
+              toast.leaving ? "animate-fade-out" : "animate-fade-in"
+            } ${
               toast.type === "error"
                 ? "bg-destructive text-destructive-foreground"
                 : toast.type === "success"
                   ? "bg-green text-green-foreground"
                   : "bg-muted text-foreground"
-            }`}
-          >
-            <span class="flex-1 wrap-break-word">{toast.message}</span>
-          </div>
-        ))}
-      </div>
-    </ToastContext.Provider>
+            }`,
+          },
+          jsx("span", { class: "flex-1 wrap-break-word" }, toast.message),
+        ),
+      ),
+    ),
   )
 }
 

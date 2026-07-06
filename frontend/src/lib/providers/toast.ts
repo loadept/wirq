@@ -1,18 +1,7 @@
 import type { ComponentChildren } from "preact"
 import { createContext, h as jsx } from "preact"
 import { useCallback, useContext, useRef, useState } from "preact/hooks"
-import type { ToastType } from "../types"
-
-export interface Toast {
-  id: number
-  type: ToastType
-  message: string
-  leaving?: boolean
-}
-
-interface ToastContextValue {
-  addToast: (type: ToastType, message: string, duration?: number) => void
-}
+import type { Toast, ToastContextValue, ToastType } from "../../types"
 
 const ToastContext = createContext<ToastContextValue>({
   addToast: () => {},

@@ -1,4 +1,4 @@
-import type { RequestLog, ResponseLog } from "../types/index"
+import type { RequestLog, ResponseLog } from "../../types/index"
 
 function parsePath(url: string): string {
   try {

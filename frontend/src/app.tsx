@@ -12,7 +12,7 @@ import { DetailPanel } from "./components/detail-panel"
 import { Header } from "./components/header"
 import { RequestList } from "./components/request-list"
 import { SettingsModal } from "./components/settings-modal"
-import { useToast } from "./lib/toast"
+import { useToast } from "./lib/providers/toast"
 import type { ProxyLog, Theme } from "./types/index"
 
 export const App = () => {

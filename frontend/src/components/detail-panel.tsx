@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { requestToRaw, responseToRaw } from "../lib/http-format"
+import { requestToRaw, responseToRaw } from "../lib/utils/http-format"
 import type { PanelTab, ProxyLog, ViewMode } from "../types/index"
 import { PrettyView } from "./pretty-view"
 

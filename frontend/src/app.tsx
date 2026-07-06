@@ -6,7 +6,7 @@ import {
   StopServer,
 } from "@wailsapp/app"
 import type { config } from "@wailsapp/models"
-import { EventsOn } from "@wailsapp/runtime"
+import { EventsOn, WindowShow } from "@wailsapp/runtime"
 import { useCallback, useEffect, useState } from "preact/hooks"
 import { DetailPanel } from "./components/detail-panel"
 import { Header } from "./components/header"
@@ -18,7 +18,7 @@ import type { ProxyLog, Theme } from "./types/index"
 export const App = () => {
   const [logs, setLogs] = useState<ProxyLog[]>([])
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [theme, setTheme] = useState<Theme>("light")
+  const [theme, setTheme] = useState<Theme>("dark")
   const [connected, setConnected] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [config, setConfig] = useState<config.ConfigDTO>({
@@ -37,37 +37,40 @@ export const App = () => {
   }, [theme])
 
   useEffect(() => {
-    const handleLoad = async () => {
+    ;(async () => {
       try {
         const cfg = await LoadConfig()
+
         setConfig(cfg)
-        if (cfg.appearance) setTheme(cfg.appearance as Theme)
-        if (!(cfg.certPath.trim() && cfg.certKeyPath.trim())) {
+        if (cfg.appearance) {
+          setTheme(cfg.appearance as Theme)
+        }
+        if (!cfg.certPath.trim() || !cfg.certKeyPath.trim()) {
           setSettingsOpen(true)
         }
       } catch (error) {
         const message = typeof error === "string" ? error : "unknown error"
         toast.addToast("error", message)
+      } finally {
+        WindowShow()
       }
-    }
-    handleLoad()
+    })()
   }, [])
 
   useEffect(() => {
     if (connected) {
-      const cancel = EventsOn("proxy:log", (log: ProxyLog) => {
+      const cancelLog = EventsOn("proxy:log", (log: ProxyLog) => {
         setLogs((prev) => [...prev, log])
       })
-      return () => cancel()
-    }
-  }, [connected])
 
-  useEffect(() => {
-    if (connected) {
-      const cancel = EventsOn("proxy:error", (error: string) => {
+      const cancelErr = EventsOn("proxy:error", (error: string) => {
         toast.addToast("error", `Proxy error: ${error}`)
       })
-      return () => cancel()
+
+      return () => {
+        cancelLog()
+        cancelErr()
+      }
     }
   }, [connected])
 
@@ -79,6 +82,7 @@ export const App = () => {
   const handleSave = async (cfg: config.ConfigDTO) => {
     try {
       await SaveConfig(cfg)
+
       setConfig(cfg)
       setTheme(cfg.appearance as Theme)
       setSettingsOpen(false)
@@ -111,6 +115,7 @@ export const App = () => {
     setStarting(true)
     try {
       await StartServer(config)
+
       setConnected(true)
       toast.addToast("success", "Proxy started")
     } catch (error) {
@@ -125,6 +130,7 @@ export const App = () => {
     setShuttingDown(true)
     try {
       await StopServer()
+
       setConnected(false)
       toast.addToast("info", "Proxy stopped")
     } catch (error) {

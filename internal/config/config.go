@@ -104,7 +104,7 @@ func defaultConfig() *ConfigDTO {
 	return &ConfigDTO{
 		ServerHost: "127.0.0.1",
 		ServerPort: 3100,
-		Appearance: "light",
+		Appearance: "dark",
 	}
 }
 

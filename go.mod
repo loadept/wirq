@@ -1,6 +1,6 @@
-module proxy
+module github.com/loadept/wirq
 
-go 1.24
+go 1.26
 
 require (
 	github.com/andybalholm/brotli v1.2.2
@@ -38,5 +38,3 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )
-
-// replace github.com/wailsapp/wails/v2 v2.12.0 => /home/jesus/go/pkg/mod

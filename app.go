@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"proxy/internal/config"
-	"proxy/internal/proxy"
-	"proxy/internal/server"
+	"github.com/loadept/wirq/internal/config"
+	"github.com/loadept/wirq/internal/proxy"
+	"github.com/loadept/wirq/internal/server"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )

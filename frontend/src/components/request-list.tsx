@@ -53,19 +53,22 @@ export function RequestList({
       </div>
 
       {logs.length === 0 ? (
-        !connected ? (
-          <div class="flex-1 flex items-center justify-center bg-background">
+        <div class="flex-1 flex flex-col gap-2 items-center justify-center bg-background">
+          <img
+            src="/images/logo.svg"
+            alt=""
+            class="w-40 opacity-50 pointer-events-none select-none "
+          />
+          {!connected ? (
             <span class="text-xs text-center text-muted-foreground">
               Proxy is not running
             </span>
-          </div>
-        ) : (
-          <div class="flex-1 flex items-center justify-center bg-background">
+          ) : (
             <span class="text-xs text-center text-muted-foreground animate-pulse">
               Waiting for requests...
             </span>
-          </div>
-        )
+          )}
+        </div>
       ) : (
         <div
           ref={containerRef}

@@ -91,7 +91,6 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var bufReq bytes.Buffer
 		req.Body = io.NopCloser(io.TeeReader(req.Body, &bufReq))
 		if err := req.Write(destTLS); err != nil {
-			runtime.EventsEmit(p.appCtx, "proxy:error", err.Error())
 			return
 		}
 
@@ -104,7 +103,6 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var bufRes bytes.Buffer
 		res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
 		if err := res.Write(clientTLS); err != nil {
-			runtime.EventsEmit(p.appCtx, "proxy:error", err.Error())
 			return
 		}
 

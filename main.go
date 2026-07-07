@@ -2,7 +2,9 @@ package main
 
 import (
 	"embed"
-	"log/slog"
+	"flag"
+	"fmt"
+	"log"
 	"os"
 
 	"github.com/wailsapp/wails/v2"
@@ -21,33 +23,19 @@ var Version = "dev"
 //go:embed all:frontend/dist
 var assets embed.FS
 
-type appLogger struct {
-	base *slog.Logger
-}
-
-func (l *appLogger) Print(msg string)   { l.base.Info(msg, "source", "wails") }
-func (l *appLogger) Trace(msg string)   { l.base.Debug(msg, "source", "wails") }
-func (l *appLogger) Debug(msg string)   { l.base.Debug(msg, "source", "wails") }
-func (l *appLogger) Info(msg string)    { l.base.Info(msg, "source", "wails") }
-func (l *appLogger) Warning(msg string) { l.base.Warn(msg, "source", "wails") }
-func (l *appLogger) Error(msg string)   { l.base.Error(msg, "source", "wails") }
-func (l *appLogger) Fatal(msg string) {
-	l.base.Error(msg, "source", "wails", "fatal", true)
-	os.Exit(1)
-}
-
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
-	slog.SetDefault(logger)
+	var versionFlag bool
+	flag.BoolVar(&versionFlag, "version", false, "Show application version")
+	flag.Parse()
 
-	slog.Info("welcome to wirq proxy", "version", Version)
+	if versionFlag {
+		fmt.Fprintf(os.Stdout, "%s %s\n", AppName, Version)
+		os.Exit(0)
+	}
 
 	app, err := NewApp(AppName)
 	if err != nil {
-		slog.Error("failed to start application", "err", err)
-		os.Exit(1)
+		log.Fatalf("failed to start application: %v", err)
 	}
 
 	opts := &options.App{
@@ -63,7 +51,7 @@ func main() {
 		OnShutdown:       app.shutdown,
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: AppID,
-			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
+			OnSecondInstanceLaunch: func(options.SecondInstanceData) {
 				runtime.WindowUnminimise(app.ctx)
 				runtime.Show(app.ctx)
 			},
@@ -71,10 +59,8 @@ func main() {
 		Bind: []any{
 			app,
 		},
-		Logger: &appLogger{base: logger},
 	}
 	if err := wails.Run(opts); err != nil {
-		slog.Error("failed to run wails", "err", err)
-		os.Exit(1)
+		log.Fatalf("failed to run wails: %v", err)
 	}
 }

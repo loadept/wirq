@@ -39,7 +39,9 @@ export const App = () => {
   useEffect(() => {
     ;(async () => {
       try {
-        const cfg = await LoadConfig()
+        const [cfg] = await Promise.all([
+          LoadConfig()
+        ])
 
         setConfig(cfg)
         if (cfg.appearance) {

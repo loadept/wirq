@@ -25,16 +25,16 @@ function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
         Headers
       </div>
       <div class="text-sm border border-border rounded overflow-hidden">
-        {entries.map(([header, values]) => (
+        {entries.map(([header, values]) =>
           values.map((value) => (
             <div class="grid grid-cols-[auto_1fr] gap-x-3 px-2 py-0.5 even:bg-muted/30">
-              <span class="text-primary shrink-0 whitespace-nowrap">{header}:</span>
-              <span class="text-foreground/80 break-all">
-                {value}
+              <span class="text-primary shrink-0 whitespace-nowrap">
+                {header}:
               </span>
+              <span class="text-foreground/80 break-all">{value}</span>
             </div>
-          ))
-        ))}
+          )),
+        )}
       </div>
     </div>
   )

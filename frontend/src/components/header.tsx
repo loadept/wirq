@@ -38,23 +38,23 @@ export function Header({
           {connected ? (
             shuttingDown ? (
               <>
-                <Loader class="h-3 w-3 animate-spin" />
+                <Loader class="h-3.5 w-3.5 animate-spin" />
                 Stopping
               </>
             ) : (
               <>
-                <Square class="h-3 w-3" />
+                <Square class="h-3.5 w-3.5" />
                 Shutdown
               </>
             )
           ) : starting ? (
             <>
-              <Loader class="h-3 w-3 animate-spin" />
+              <Loader class="h-3.5 w-3.5 animate-spin" />
               Starting
             </>
           ) : (
             <>
-              <Play class="h-3 w-3" />
+              <Play class="h-3.5 w-3.5" />
               Start
             </>
           )}

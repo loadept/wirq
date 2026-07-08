@@ -47,8 +47,7 @@ export function RequestList({
           onClick={onClear}
           class="flex items-center gap-1 px-3 py-1.5 border border-border rounded text-xs text-foreground transition-colors enabled:hover:bg-muted enabled:cursor-pointer"
         >
-          <BrushCleaning class="h-3 w-3" />
-          Clear
+          <BrushCleaning class="h-4 w-4" />
         </button>
       </div>
 

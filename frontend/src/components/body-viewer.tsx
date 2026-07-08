@@ -113,7 +113,7 @@ function JsonViewer({ data }: { data: unknown }) {
   return (
     <div>
       <div class="text-xs text-muted-foreground mb-1">
-        <FileJson class="h-3 w-3 inline mr-1" />
+        <FileJson class="h-3.5 w-3.5 inline mr-1" />
         JSON — {formatSize(new Blob([formatted]).size)}
       </div>
       <pre class="text-sm text-foreground/80 whitespace-pre bg-background border border-border rounded p-3">
@@ -311,7 +311,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
         return (
           <div class="space-y-2">
             <div class="bg-destructive/10 text-destructive px-3 py-1 text-xs border border-destructive/30 rounded">
-              <FileCode class="h-3 w-3 inline mr-1" />
+              <FileCode class="h-3.5 w-3.5 inline mr-1" />
               Body truncated (10KB limit by proxy)
             </div>
             <div class="text-xs text-muted-foreground">
@@ -344,7 +344,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
       return (
         <div class="space-y-2">
           <div class="text-xs text-muted-foreground">
-            <FileCode class="h-3 w-3 inline mr-1" />
+            <FileCode class="h-3.5 w-3.5 inline mr-1" />
             HTML content — {formatSize(cleanStr.length)}
           </div>
           <ActionButton
@@ -377,7 +377,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
     return (
       <div>
         <div class="text-xs text-muted-foreground mb-1">
-          <FileCode class="h-3 w-3 inline mr-1" />
+          <FileCode class="h-3.5 w-3.5 inline mr-1" />
           XML — {formatSize(cleanStr.length)}
         </div>
         <TextViewer text={cleanStr} />

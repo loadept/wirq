@@ -18,7 +18,7 @@ function formatBodyRaw(body: unknown, isBase64: boolean): string {
 
 export function requestToRaw(req: RequestLog): string {
   const path = parsePath(req.url)
-  const lines = [`${req.method} ${path} ${req.proto}`]
+  const lines = [`${req.method} ${path} ${req.proto}`, `Host: ${req.host}`]
 
   for (const [key, values] of Object.entries(req.headers)) {
     for (const v of values) {

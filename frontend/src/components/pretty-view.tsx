@@ -25,13 +25,15 @@ function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
         Headers
       </div>
       <div class="text-sm border border-border rounded overflow-hidden">
-        {entries.map(([key, values]) => (
-          <div class="grid grid-cols-[auto_1fr] gap-x-3 px-2 py-0.5 even:bg-muted/30">
-            <span class="text-primary shrink-0 whitespace-nowrap">{key}:</span>
-            <span class="text-foreground/80 break-all">
-              {values.join(", ")}
-            </span>
-          </div>
+        {entries.map(([header, values]) => (
+          values.map((value) => (
+            <div class="grid grid-cols-[auto_1fr] gap-x-3 px-2 py-0.5 even:bg-muted/30">
+              <span class="text-primary shrink-0 whitespace-nowrap">{header}:</span>
+              <span class="text-foreground/80 break-all">
+                {value}
+              </span>
+            </div>
+          ))
         ))}
       </div>
     </div>
@@ -56,6 +58,10 @@ export function PrettyView({ data, type }: MessageViewProps) {
             Proto:
           </span>
           <span class="text-foreground/90">{req.proto}</span>
+          <span class="text-xs uppercase tracking-wider text-muted-foreground">
+            Host:
+          </span>
+          <span class="text-foreground/90">{req.host}</span>
           <span class="text-xs uppercase tracking-wider text-muted-foreground">
             TLS:
           </span>

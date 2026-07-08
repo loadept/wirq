@@ -1,5 +1,8 @@
+import { ClipboardSetText } from "@wailsapp/runtime"
+import { Copy } from "lucide-preact"
 import type { ComponentChildren } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
+import { useToast } from "../lib/providers/toast"
 import { requestToRaw, responseToRaw } from "../lib/utils/http-format"
 import type { PanelTab, ProxyLog, ViewMode } from "../types/index"
 import { PrettyView } from "./pretty-view"
@@ -45,6 +48,30 @@ export function DetailPanel({ event }: DetailPanelProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("pretty")
   const [panelHeight, setPanelHeight] = useState(300)
   const isDragging = useRef(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const toast = useToast()
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0)
+  }, [tab, viewMode])
+
+  const handleCopy = async () => {
+    if (tab === "request" && !request) return
+    if (tab === "response" && !response) return
+
+    try {
+      const content =
+        tab === "request" ? requestToRaw(request) : responseToRaw(response)
+      const ok = await ClipboardSetText(content)
+      if (!ok) {
+        toast.addToast("error", "Could not copy to clipboard")
+        return
+      }
+      toast.addToast("success", "Copied to clipboard")
+    } catch {
+      toast.addToast("error", "An error occurred copying to clipboard")
+    }
+  }
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
@@ -98,7 +125,15 @@ export function DetailPanel({ event }: DetailPanelProps) {
             Response
           </TabButton>
         </div>
-        <div class="ml-auto flex">
+        <div class="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleCopy}
+            class="px-3 p-1.5 text-muted-foreground hover:text-accent transition-colors cursor-pointer"
+            title="Copy to clipboard"
+          >
+            <Copy class="h-4 w-4" />
+          </button>
           <TabButton
             active={viewMode === "pretty"}
             onClick={() => setViewMode("pretty")}
@@ -113,7 +148,7 @@ export function DetailPanel({ event }: DetailPanelProps) {
           </TabButton>
         </div>
       </div>
-      <div class="flex-1 overflow-auto p-3">
+      <div ref={scrollRef} class="flex-1 overflow-auto p-3">
         {tab === "request" ? (
           viewMode === "pretty" ? (
             <PrettyView data={request} type="request" />

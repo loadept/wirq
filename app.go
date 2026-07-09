@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,8 +17,9 @@ import (
 
 type App struct {
 	ctx    context.Context
-	server *server.Manager
 	config *config.Manager
+	server *server.Manager
+	proxy  *proxy.Manager
 }
 
 func NewApp(appName string) (*App, error) {
@@ -83,22 +85,28 @@ func (a *App) SelectCertFile() (string, error) {
 }
 
 func (a *App) StartServer(cfg *config.ConfigDTO) error {
-	certs, err := tls.LoadX509KeyPair(cfg.CertPath, cfg.CertKeyPath)
-	if err != nil {
-		return fmt.Errorf("could not load certificates: %w", err)
+	if a.proxy == nil {
+		certs, err := tls.LoadX509KeyPair(cfg.CertPath, cfg.CertKeyPath)
+		if err != nil {
+			return fmt.Errorf("could not load certificates: %w", err)
+		}
+
+		a.proxy = proxy.New(a.ctx, &certs)
 	}
 
-	handler := proxy.New(&certs, a.ctx)
 	addr := fmt.Sprintf("%s:%d", cfg.ServerHost, cfg.ServerPort)
-
-	return a.server.Start(addr, handler)
+	return a.server.Start(addr, a.proxy.Handler())
 }
 
 func (a *App) StopServer() error {
 	return a.server.Stop()
 }
 
-func (a *App) SaveLogs(data, filename string) (string, error) {
+func (a *App) GetLogDetail(logID int64) *proxy.LogEntry {
+	return a.proxy.GetLog(logID)
+}
+
+func (a *App) ExportLogs(logIDs []int64, filename string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("could not resolve user home dir: %w", err)
@@ -118,9 +126,26 @@ func (a *App) SaveLogs(data, filename string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
-	err = os.WriteFile(path, []byte(data), 0o644)
+
+	logs, err := a.proxy.GetLogs(logIDs)
 	if err != nil {
 		return "", err
 	}
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(logs); err != nil {
+		return "", err
+	}
 	return path, nil
+}
+
+func (a *App) ClearLogs() {
+	a.proxy.ClearLogs()
 }

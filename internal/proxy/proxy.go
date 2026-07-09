@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/andybalholm/brotli"
@@ -21,100 +22,213 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const maxBodySize = 10 * 1024
+const (
+	maxBodySize = 10 * 1024
+	maxLogs     = 1000
+)
 
-type Proxy struct {
+type Manager struct {
+	appCtx     context.Context
+	httpClient *http.Client
+
 	ca     *tls.Certificate
-	client *http.Client
 	certs  map[string]*tls.Certificate
-	mu     sync.RWMutex
-	appCtx context.Context
+	certMu sync.RWMutex
+
+	counter atomic.Int64
+	logs    []*LogEntry
+	logMu   sync.RWMutex
 }
 
-func New(ca *tls.Certificate, appCtx context.Context) *Proxy {
-	return &Proxy{
-		ca:     ca,
-		client: &http.Client{Timeout: 10 * time.Second},
-		certs:  make(map[string]*tls.Certificate),
-		appCtx: appCtx,
+func New(ctx context.Context, ca *tls.Certificate) *Manager {
+	return &Manager{
+		ca:         ca,
+		httpClient: &http.Client{Timeout: 10 * time.Second},
+		certs:      make(map[string]*tls.Certificate),
+		appCtx:     ctx,
 	}
 }
 
-func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodConnect {
-		host, _, err := net.SplitHostPort(r.Host)
+func (m *Manager) Handler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := m.counter.Add(1)
+
+		if r.Method == http.MethodConnect {
+			host, _, err := net.SplitHostPort(r.Host)
+			if err != nil {
+				host = r.Host
+			}
+
+			destTLS, err := tls.Dial("tcp", r.Host, &tls.Config{
+				ServerName: host,
+			})
+			if err != nil {
+				http.Error(w, "unable to connect to destination", http.StatusServiceUnavailable)
+				return
+			}
+			defer destTLS.Close()
+
+			w.WriteHeader(http.StatusOK)
+			hijacker, ok := w.(http.Hijacker)
+			if !ok {
+				http.Error(w, "server does not support hijacking", http.StatusInternalServerError)
+				return
+			}
+
+			conn, _, err := hijacker.Hijack()
+			if err != nil {
+				return
+			}
+
+			cert, err := m.cachedCert(host)
+			if err != nil {
+				conn.Close()
+				return
+			}
+			clientTLS := tls.Server(conn, &tls.Config{
+				Certificates: []tls.Certificate{*cert},
+			})
+			defer clientTLS.Close()
+
+			if err := clientTLS.Handshake(); err != nil {
+				return
+			}
+
+			req, err := http.ReadRequest(bufio.NewReader(clientTLS))
+			if err != nil {
+				return
+			}
+			defer req.Body.Close()
+
+			var bufReq bytes.Buffer
+			req.Body = io.NopCloser(io.TeeReader(req.Body, &bufReq))
+			if err := req.Write(destTLS); err != nil {
+				return
+			}
+
+			res, err := http.ReadResponse(bufio.NewReader(destTLS), req)
+			if err != nil {
+				return
+			}
+			defer res.Body.Close()
+
+			var bufRes bytes.Buffer
+			res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
+			if err := res.Write(clientTLS); err != nil {
+				return
+			}
+
+			reqLog := RequestLog{
+				Host:    req.Host,
+				Method:  req.Method,
+				URL:     req.URL.String(),
+				Proto:   req.Proto,
+				Headers: req.Header,
+				TLS:     true,
+			}
+			respLog := ResponseLog{
+				Proto:      res.Proto,
+				StatusCode: res.StatusCode,
+				Headers:    res.Header,
+			}
+			reqContentType := req.Header.Get("Content-Type")
+			if bufReq.Len() > 0 {
+				switch {
+				case strings.Contains(reqContentType, "application/json"):
+					b := bufReq.Bytes()
+					if json.Valid(b) {
+						reqLog.Body = json.RawMessage(b)
+						break
+					}
+					fallthrough
+				case strings.Contains(reqContentType, "application/xml"):
+					fallthrough
+				case strings.Contains(reqContentType, "text/"):
+					fallthrough
+				case strings.Contains(reqContentType, "application/x-www-form-urlencoded"):
+					reqLog.Body = bufReq.String()
+				default:
+					bodyEncoded := base64.StdEncoding.EncodeToString(bufReq.Bytes())
+					reqLog.Body = bodyEncoded
+					reqLog.IsBase64 = true
+				}
+			}
+			respContentType := res.Header.Get("Content-Type")
+			if bufRes.Len() > 0 {
+				bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes)
+				switch {
+				case strings.Contains(respContentType, "application/json"):
+					if json.Valid(bodyBytes) {
+						respLog.Body = json.RawMessage(bodyBytes)
+					} else {
+						respLog.Body = string(bodyBytes)
+					}
+				case strings.Contains(respContentType, "application/xml"):
+					fallthrough
+				case strings.Contains(respContentType, "text/"):
+					if len(bodyBytes) > maxBodySize {
+						respLog.Body = string(bodyBytes)[:maxBodySize] + " ...[truncate]"
+					} else {
+						respLog.Body = string(bodyBytes)
+					}
+				default:
+					respLog.Body = base64.StdEncoding.EncodeToString(bodyBytes)
+					respLog.IsBase64 = true
+				}
+			}
+
+			log := &LogEntry{
+				ID:       id,
+				Request:  reqLog,
+				Response: respLog,
+			}
+			summary := &LogSummary{
+				ID:         id,
+				Host:       req.Host,
+				Method:     req.Method,
+				URL:        req.URL.String(),
+				Proto:      req.Proto,
+				StatusCode: res.StatusCode,
+				TLS:        true,
+			}
+
+			m.appendLog(log)
+			runtime.EventsEmit(m.appCtx, "proxy:log", summary)
+			return
+		}
+		req, err := http.NewRequest(r.Method, r.URL.String(), r.Body)
 		if err != nil {
-			host = r.Host
-		}
-
-		destTLS, err := tls.Dial("tcp", r.Host, &tls.Config{
-			ServerName: host,
-		})
-		if err != nil {
-			http.Error(w, "unable to connect to destination", http.StatusServiceUnavailable)
+			http.Error(w, "error creating request", http.StatusBadGateway)
 			return
 		}
-		defer destTLS.Close()
-
-		w.WriteHeader(http.StatusOK)
-		hijacker, ok := w.(http.Hijacker)
-		if !ok {
-			http.Error(w, "server does not support hijacking", http.StatusInternalServerError)
-			return
-		}
-
-		conn, _, err := hijacker.Hijack()
-		if err != nil {
-			return
-		}
-
-		cert, err := p.cachedCert(host)
-		if err != nil {
-			conn.Close()
-			return
-		}
-		clientTLS := tls.Server(conn, &tls.Config{
-			Certificates: []tls.Certificate{*cert},
-		})
-		defer clientTLS.Close()
-
-		if err := clientTLS.Handshake(); err != nil {
-			return
-		}
-
-		req, err := http.ReadRequest(bufio.NewReader(clientTLS))
-		if err != nil {
-			return
-		}
-		defer req.Body.Close()
+		maps.Copy(req.Header, r.Header)
 
 		var bufReq bytes.Buffer
-		req.Body = io.NopCloser(io.TeeReader(req.Body, &bufReq))
-		if err := req.Write(destTLS); err != nil {
-			return
-		}
+		req.Body = io.NopCloser(io.TeeReader(r.Body, &bufReq))
 
-		res, err := http.ReadResponse(bufio.NewReader(destTLS), req)
+		res, err := m.httpClient.Do(req)
 		if err != nil {
+			http.Error(w, "proxy error", http.StatusBadGateway)
 			return
 		}
 		defer res.Body.Close()
+		maps.Copy(w.Header(), res.Header)
 
 		var bufRes bytes.Buffer
 		res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
-		if err := res.Write(clientTLS); err != nil {
-			return
-		}
 
-		reqLog := requestLog{
+		w.WriteHeader(res.StatusCode)
+		io.Copy(w, res.Body)
+
+		reqLog := RequestLog{
 			Host:    req.Host,
 			Method:  req.Method,
 			URL:     req.URL.String(),
 			Proto:   req.Proto,
 			Headers: req.Header,
-			TLS:     true,
+			TLS:     false,
 		}
-		respLog := responseLog{
+		respLog := ResponseLog{
 			Proto:      res.Proto,
 			StatusCode: res.StatusCode,
 			Headers:    res.Header,
@@ -143,7 +257,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		respContentType := res.Header.Get("Content-Type")
 		if bufRes.Len() > 0 {
-			bodyBytes := p.decompress(res.Header.Get("Content-Encoding"), &bufRes)
+			bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes)
 			switch {
 			case strings.Contains(respContentType, "application/json"):
 				if json.Valid(bodyBytes) {
@@ -165,96 +279,27 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		runtime.EventsEmit(p.appCtx, "proxy:log", Log{reqLog, respLog})
-		return
-	}
-	req, err := http.NewRequest(r.Method, r.URL.String(), r.Body)
-	if err != nil {
-		http.Error(w, "error creating request", http.StatusBadGateway)
-		return
-	}
-	maps.Copy(req.Header, r.Header)
-
-	var bufReq bytes.Buffer
-	req.Body = io.NopCloser(io.TeeReader(r.Body, &bufReq))
-
-	res, err := p.client.Do(req)
-	if err != nil {
-		http.Error(w, "proxy error", http.StatusBadGateway)
-		return
-	}
-	defer res.Body.Close()
-	maps.Copy(w.Header(), res.Header)
-
-	var bufRes bytes.Buffer
-	res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
-
-	w.WriteHeader(res.StatusCode)
-	io.Copy(w, res.Body)
-
-	reqLog := requestLog{
-		Host:    req.Host,
-		Method:  req.Method,
-		URL:     req.URL.String(),
-		Proto:   req.Proto,
-		Headers: req.Header,
-		TLS:     false,
-	}
-	respLog := responseLog{
-		Proto:      res.Proto,
-		StatusCode: res.StatusCode,
-		Headers:    res.Header,
-	}
-	reqContentType := req.Header.Get("Content-Type")
-	if bufReq.Len() > 0 {
-		switch {
-		case strings.Contains(reqContentType, "application/json"):
-			b := bufReq.Bytes()
-			if json.Valid(b) {
-				reqLog.Body = json.RawMessage(b)
-				break
-			}
-			fallthrough
-		case strings.Contains(reqContentType, "application/xml"):
-			fallthrough
-		case strings.Contains(reqContentType, "text/"):
-			fallthrough
-		case strings.Contains(reqContentType, "application/x-www-form-urlencoded"):
-			reqLog.Body = bufReq.String()
-		default:
-			bodyEncoded := base64.StdEncoding.EncodeToString(bufReq.Bytes())
-			reqLog.Body = bodyEncoded
-			reqLog.IsBase64 = true
+		log := &LogEntry{
+			ID:       id,
+			Request:  reqLog,
+			Response: respLog,
 		}
-	}
-	respContentType := res.Header.Get("Content-Type")
-	if bufRes.Len() > 0 {
-		bodyBytes := p.decompress(res.Header.Get("Content-Encoding"), &bufRes)
-		switch {
-		case strings.Contains(respContentType, "application/json"):
-			if json.Valid(bodyBytes) {
-				respLog.Body = json.RawMessage(bodyBytes)
-			} else {
-				respLog.Body = string(bodyBytes)
-			}
-		case strings.Contains(respContentType, "application/xml"):
-			fallthrough
-		case strings.Contains(respContentType, "text/"):
-			if len(bodyBytes) > maxBodySize {
-				respLog.Body = string(bodyBytes)[:maxBodySize] + " ...[truncate]"
-			} else {
-				respLog.Body = string(bodyBytes)
-			}
-		default:
-			respLog.Body = base64.StdEncoding.EncodeToString(bodyBytes)
-			respLog.IsBase64 = true
+		summary := &LogSummary{
+			ID:         id,
+			Host:       req.Host,
+			Method:     req.Method,
+			URL:        req.URL.String(),
+			Proto:      req.Proto,
+			StatusCode: res.StatusCode,
+			TLS:        false,
 		}
-	}
 
-	runtime.EventsEmit(p.appCtx, "proxy:log", Log{reqLog, respLog})
+		m.appendLog(log)
+		runtime.EventsEmit(m.appCtx, "proxy:log", summary)
+	})
 }
 
-func (p *Proxy) decompress(encoding string, buf *bytes.Buffer) []byte {
+func (m *Manager) decompress(encoding string, buf *bytes.Buffer) []byte {
 	var bodyBytes []byte
 	switch {
 	case strings.Contains(encoding, "gzip"):
@@ -298,24 +343,70 @@ func (p *Proxy) decompress(encoding string, buf *bytes.Buffer) []byte {
 	return bodyBytes
 }
 
-func (p *Proxy) cachedCert(host string) (*tls.Certificate, error) {
-	p.mu.RLock()
-	cert, ok := p.certs[host]
-	p.mu.RUnlock()
+func (m *Manager) cachedCert(host string) (*tls.Certificate, error) {
+	m.certMu.RLock()
+	cert, ok := m.certs[host]
+	m.certMu.RUnlock()
 	if ok {
 		return cert, nil
 	}
 
-	cert, err := GenerateCert(p.ca, host)
+	cert, err := GenerateCert(m.ca, host)
 	if err != nil {
 		return nil, err
 	}
 
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if cert, ok := p.certs[host]; ok {
+	m.certMu.Lock()
+	defer m.certMu.Unlock()
+	if cert, ok := m.certs[host]; ok {
 		return cert, nil
 	}
-	p.certs[host] = cert
+	m.certs[host] = cert
 	return cert, nil
+}
+
+func (m *Manager) GetLog(id int64) *LogEntry {
+	m.logMu.RLock()
+	defer m.logMu.RUnlock()
+
+	for i := range m.logs {
+		if m.logs[i].ID == id {
+			return m.logs[i]
+		}
+	}
+	return nil
+}
+
+func (m *Manager) GetLogs(ids []int64) ([]*LogEntry, error) {
+	m.logMu.RLock()
+	defer m.logMu.RUnlock()
+
+	set := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		set[id] = struct{}{}
+	}
+
+	result := make([]*LogEntry, 0, len(ids))
+	for i := range m.logs {
+		if _, ok := set[m.logs[i].ID]; ok {
+			result = append(result, m.logs[i])
+		}
+	}
+	return result, nil
+}
+
+func (m *Manager) ClearLogs() {
+	m.logMu.Lock()
+	defer m.logMu.Unlock()
+	m.logs = nil
+}
+
+func (m *Manager) appendLog(log *LogEntry) {
+	m.logMu.Lock()
+	defer m.logMu.Unlock()
+
+	m.logs = append(m.logs, log)
+	if len(m.logs) > maxLogs {
+		m.logs = m.logs[len(m.logs)-maxLogs:]
+	}
 }

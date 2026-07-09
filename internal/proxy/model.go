@@ -1,6 +1,6 @@
 package proxy
 
-type requestLog struct {
+type RequestLog struct {
 	Host     string              `json:"host"`
 	Method   string              `json:"method"`
 	URL      string              `json:"url"`
@@ -11,7 +11,7 @@ type requestLog struct {
 	IsBase64 bool                `json:"isBase64"`
 }
 
-type responseLog struct {
+type ResponseLog struct {
 	Proto      string              `json:"proto"`
 	StatusCode int                 `json:"statusCode"`
 	Headers    map[string][]string `json:"headers"`
@@ -19,7 +19,18 @@ type responseLog struct {
 	IsBase64   bool                `json:"isBase64"`
 }
 
-type Log struct {
-	Request  requestLog  `json:"request"`
-	Response responseLog `json:"response"`
+type LogEntry struct {
+	ID       int64       `json:"id"`
+	Request  RequestLog  `json:"request"`
+	Response ResponseLog `json:"response"`
+}
+
+type LogSummary struct {
+	ID         int64  `json:"id"`
+	Host       string `json:"host"`
+	Method     string `json:"method"`
+	URL        string `json:"url"`
+	Proto      string `json:"proto"`
+	StatusCode int    `json:"statusCode"`
+	TLS        bool   `json:"tls"`
 }

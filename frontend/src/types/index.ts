@@ -8,7 +8,7 @@ export interface RequestLog {
   headers: Record<string, string[]>
   tls: boolean
   body: unknown
-  is_base64: boolean
+  isBase64: boolean
 }
 
 export interface ResponseLog {

@@ -66,7 +66,7 @@ export function Header({
           type="button"
           onClick={onSettings}
           class="p-1.5 text-foreground hover:text-accent transition-colors cursor-pointer"
-          title="Settings"
+          title="Open settings"
         >
           <Settings class="h-4 w-4" />
         </button>

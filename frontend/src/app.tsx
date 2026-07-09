@@ -39,9 +39,7 @@ export const App = () => {
   useEffect(() => {
     ;(async () => {
       try {
-        const [cfg] = await Promise.all([
-          LoadConfig()
-        ])
+        const [cfg] = await Promise.all([LoadConfig()])
 
         setConfig(cfg)
         if (cfg.appearance) {
@@ -164,7 +162,7 @@ export const App = () => {
         onSelect={setSelectedIndex}
         onClear={handleClear}
       />
-      {selectedLog && <DetailPanel event={selectedLog} />}
+      {selectedLog && <DetailPanel log={selectedLog} />}
       {settingsOpen && (
         <SettingsModal
           initial={config}

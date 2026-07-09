@@ -8,7 +8,7 @@ import type { PanelTab, ProxyLog, ViewMode } from "../types/index"
 import { PrettyView } from "./pretty-view"
 
 interface DetailPanelProps {
-  event: ProxyLog
+  log: ProxyLog
 }
 
 function TabButton({
@@ -43,7 +43,7 @@ function RawView({ content }: { content: string }) {
   )
 }
 
-export function DetailPanel({ event }: DetailPanelProps) {
+export function DetailPanel({ log }: DetailPanelProps) {
   const [tab, setTab] = useState<PanelTab>("request")
   const [viewMode, setViewMode] = useState<ViewMode>("pretty")
   const [panelHeight, setPanelHeight] = useState(300)
@@ -53,7 +53,7 @@ export function DetailPanel({ event }: DetailPanelProps) {
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0)
-  }, [tab, viewMode])
+  }, [log, tab, viewMode])
 
   const handleCopy = async () => {
     if (tab === "request" && !request) return
@@ -94,7 +94,7 @@ export function DetailPanel({ event }: DetailPanelProps) {
     }
   }, [])
 
-  const { request, response } = event
+  const { request, response } = log
 
   return (
     <div

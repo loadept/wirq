@@ -26,7 +26,7 @@ export function requestToRaw(req: RequestLog): string {
     }
   }
 
-  const body = formatBodyRaw(req.body, req.is_base64)
+  const body = formatBodyRaw(req.body, req.isBase64)
   if (body) {
     lines.push("")
     lines.push(body)

@@ -74,7 +74,7 @@ export function PrettyView({ data, type }: MessageViewProps) {
           </div>
           <BodyViewer
             body={req.body}
-            isBase64={req.is_base64}
+            isBase64={req.isBase64}
             contentType={getContentType(req.headers)}
           />
         </div>

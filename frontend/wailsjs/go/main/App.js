@@ -10,6 +10,10 @@ export function SaveConfig(arg1) {
   return window['go']['main']['App']['SaveConfig'](arg1);
 }
 
+export function SaveLogs(arg1, arg2) {
+  return window['go']['main']['App']['SaveLogs'](arg1, arg2);
+}
+
 export function SelectCertFile() {
   return window['go']['main']['App']['SelectCertFile']();
 }

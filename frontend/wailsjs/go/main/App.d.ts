@@ -6,6 +6,8 @@ export function LoadConfig():Promise<config.ConfigDTO>;
 
 export function SaveConfig(arg1:config.ConfigDTO):Promise<void>;
 
+export function SaveLogs(arg1:string,arg2:string):Promise<string>;
+
 export function SelectCertFile():Promise<string>;
 
 export function StartServer(arg1:config.ConfigDTO):Promise<void>;

@@ -97,3 +97,30 @@ func (a *App) StartServer(cfg *config.ConfigDTO) error {
 func (a *App) StopServer() error {
 	return a.server.Stop()
 }
+
+func (a *App) SaveLogs(data, filename string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not resolve user home dir: %w", err)
+	}
+
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:            "Export logs",
+		DefaultFilename:  filename,
+		DefaultDirectory: homeDir,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "JSON Files (*.json)", Pattern: "*.json"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil
+	}
+	err = os.WriteFile(path, []byte(data), 0o644)
+	if err != nil {
+		return "", err
+	}
+	return path, nil
+}

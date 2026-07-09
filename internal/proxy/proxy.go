@@ -123,7 +123,12 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if bufReq.Len() > 0 {
 			switch {
 			case strings.Contains(reqContentType, "application/json"):
-				reqLog.Body = json.RawMessage(bufReq.Bytes())
+				b := bufReq.Bytes()
+				if json.Valid(b) {
+					reqLog.Body = json.RawMessage(b)
+					break
+				}
+				fallthrough
 			case strings.Contains(reqContentType, "application/xml"):
 				fallthrough
 			case strings.Contains(reqContentType, "text/"):
@@ -141,8 +146,12 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			bodyBytes := p.decompress(res.Header.Get("Content-Encoding"), &bufRes)
 			switch {
 			case strings.Contains(respContentType, "application/json"):
-				respLog.Body = json.RawMessage(bodyBytes)
-			case strings.Contains(reqContentType, "application/xml"):
+				if json.Valid(bodyBytes) {
+					respLog.Body = json.RawMessage(bodyBytes)
+				} else {
+					respLog.Body = string(bodyBytes)
+				}
+			case strings.Contains(respContentType, "application/xml"):
 				fallthrough
 			case strings.Contains(respContentType, "text/"):
 				if len(bodyBytes) > maxBodySize {
@@ -200,7 +209,14 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if bufReq.Len() > 0 {
 		switch {
 		case strings.Contains(reqContentType, "application/json"):
-			reqLog.Body = json.RawMessage(bufReq.Bytes())
+			b := bufReq.Bytes()
+			if json.Valid(b) {
+				reqLog.Body = json.RawMessage(b)
+				break
+			}
+			fallthrough
+		case strings.Contains(reqContentType, "application/xml"):
+			fallthrough
 		case strings.Contains(reqContentType, "text/"):
 			fallthrough
 		case strings.Contains(reqContentType, "application/x-www-form-urlencoded"):
@@ -216,7 +232,13 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		bodyBytes := p.decompress(res.Header.Get("Content-Encoding"), &bufRes)
 		switch {
 		case strings.Contains(respContentType, "application/json"):
-			respLog.Body = json.RawMessage(bodyBytes)
+			if json.Valid(bodyBytes) {
+				respLog.Body = json.RawMessage(bodyBytes)
+			} else {
+				respLog.Body = string(bodyBytes)
+			}
+		case strings.Contains(respContentType, "application/xml"):
+			fallthrough
 		case strings.Contains(respContentType, "text/"):
 			if len(bodyBytes) > maxBodySize {
 				respLog.Body = string(bodyBytes)[:maxBodySize] + " ...[truncate]"

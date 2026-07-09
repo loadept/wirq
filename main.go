@@ -40,10 +40,8 @@ func main() {
 
 	opts := &options.App{
 		Title:            AppName,
-		Width:            1280,
-		Height:           800,
-		MinWidth:         1024,
-		MinHeight:        768,
+		MinWidth:         1280,
+		MinHeight:        800,
 		StartHidden:      true,
 		AssetServer:      &assetserver.Options{Assets: assets},
 		BackgroundColour: &options.RGBA{R: 26, G: 26, B: 26, A: 1},

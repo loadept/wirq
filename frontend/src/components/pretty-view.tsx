@@ -1,8 +1,8 @@
-import type { RequestLog, ResponseLog } from "../types/index"
+import type { proxy } from "@wailsapp/models"
 import { BodyViewer } from "./body-viewer"
 
 interface MessageViewProps {
-  data: RequestLog | ResponseLog
+  data: proxy.RequestLog | proxy.ResponseLog
   type: "request" | "response"
 }
 
@@ -42,7 +42,7 @@ function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
 
 export function PrettyView({ data, type }: MessageViewProps) {
   if (type === "request") {
-    const req = data as RequestLog
+    const req = data as proxy.RequestLog
     return (
       <div class="space-y-3">
         <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
@@ -82,7 +82,7 @@ export function PrettyView({ data, type }: MessageViewProps) {
     )
   }
 
-  const res = data as ResponseLog
+  const res = data as proxy.ResponseLog
   return (
     <div class="space-y-3">
       <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">

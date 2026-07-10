@@ -1,4 +1,4 @@
-import type { RequestLog, ResponseLog } from "../../types/index"
+import type { proxy } from "@wailsapp/models"
 
 function parsePath(url: string): string {
   try {
@@ -10,13 +10,19 @@ function parsePath(url: string): string {
 }
 
 function formatBodyRaw(body: unknown, isBase64: boolean): string {
-  if (body === null || body === undefined) return ""
-  if (isBase64) return "[base64 encoded]"
-  if (typeof body === "object") return JSON.stringify(body)
+  if (body === null || body === undefined) {
+    return ""
+  }
+  if (isBase64) {
+    return "[base64 encoded]"
+  }
+  if (typeof body === "object") {
+    return JSON.stringify(body)
+  }
   return String(body)
 }
 
-export function requestToRaw(req: RequestLog): string {
+export function requestToRaw(req: proxy.RequestLog): string {
   const path = parsePath(req.url)
   const lines = [`${req.method} ${path} ${req.proto}`, `Host: ${req.host}`]
 
@@ -35,7 +41,7 @@ export function requestToRaw(req: RequestLog): string {
   return lines.join("\r\n")
 }
 
-export function responseToRaw(res: ResponseLog): string {
+export function responseToRaw(res: proxy.ResponseLog): string {
   const lines = [`${res.proto} ${res.statusCode}`]
 
   for (const [key, values] of Object.entries(res.headers)) {

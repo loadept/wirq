@@ -1,14 +1,15 @@
 import { ClipboardSetText } from "@wailsapp/runtime"
-import { Copy } from "lucide-preact"
+import { Copy, Loader } from "lucide-preact"
 import type { ComponentChildren } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
+import { useLogDetail } from "../lib/hooks/logDetail"
 import { useToast } from "../lib/providers/toast"
 import { requestToRaw, responseToRaw } from "../lib/utils/http-format"
-import type { PanelTab, ProxyLog, ViewMode } from "../types/index"
+import type { PanelTab, ViewMode } from "../types/index"
 import { PrettyView } from "./pretty-view"
 
 interface DetailPanelProps {
-  log: ProxyLog
+  logId: number
 }
 
 function TabButton({
@@ -43,25 +44,38 @@ function RawView({ content }: { content: string }) {
   )
 }
 
-export function DetailPanel({ log }: DetailPanelProps) {
+export function DetailPanel({ logId }: DetailPanelProps) {
+  const { detail, error, setError } = useLogDetail(logId)
   const [tab, setTab] = useState<PanelTab>("request")
   const [viewMode, setViewMode] = useState<ViewMode>("pretty")
   const [panelHeight, setPanelHeight] = useState(300)
   const isDragging = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
   const toast = useToast()
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0)
-  }, [log, tab, viewMode])
+  }, [logId, tab, viewMode])
+
+  useEffect(() => {
+    if (error) {
+      toast.addToast("error", error)
+      setError(null)
+    }
+  }, [error])
 
   const handleCopy = async () => {
-    if (tab === "request" && !request) return
-    if (tab === "response" && !response) return
+    if (!detail) {
+      return
+    }
 
     try {
       const content =
-        tab === "request" ? requestToRaw(request) : responseToRaw(response)
+        tab === "request"
+          ? requestToRaw(detail.request)
+          : responseToRaw(detail.response)
+
       const ok = await ClipboardSetText(content)
       if (!ok) {
         toast.addToast("error", "Could not copy to clipboard")
@@ -75,7 +89,10 @@ export function DetailPanel({ log }: DetailPanelProps) {
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return
+      if (!isDragging.current) {
+        return
+      }
+
       const newHeight = window.innerHeight - e.clientY - 36
       setPanelHeight(
         Math.max(150, Math.min(newHeight, window.innerHeight * 0.8)),
@@ -94,8 +111,6 @@ export function DetailPanel({ log }: DetailPanelProps) {
     }
   }, [])
 
-  const { request, response } = log
-
   return (
     <div
       class="border-t border-border bg-card flex flex-col shrink-0"
@@ -110,57 +125,68 @@ export function DetailPanel({ log }: DetailPanelProps) {
           document.body.classList.add("select-none")
         }}
       />
-      <div class="flex items-center border-b border-border shrink-0">
-        <div class="flex">
-          <TabButton
-            active={tab === "request"}
-            onClick={() => setTab("request")}
-          >
-            Request
-          </TabButton>
-          <TabButton
-            active={tab === "response"}
-            onClick={() => setTab("response")}
-          >
-            Response
-          </TabButton>
+      {!detail ? (
+        <div class="flex-1 flex flex-col gap-2 items-center justify-center bg-background">
+          <Loader class="h-3.5 w-3.5 animate-spin" />
+          <span class="text-xs text-center text-muted-foreground">
+            Loading detail
+          </span>
         </div>
-        <div class="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleCopy}
-            class="px-3 p-1.5 text-muted-foreground hover:text-accent transition-colors cursor-pointer"
-            title="Copy to clipboard"
-          >
-            <Copy class="h-4 w-4" />
-          </button>
-          <TabButton
-            active={viewMode === "pretty"}
-            onClick={() => setViewMode("pretty")}
-          >
-            Pretty
-          </TabButton>
-          <TabButton
-            active={viewMode === "raw"}
-            onClick={() => setViewMode("raw")}
-          >
-            Raw
-          </TabButton>
-        </div>
-      </div>
-      <div ref={scrollRef} class="flex-1 overflow-auto p-3">
-        {tab === "request" ? (
-          viewMode === "pretty" ? (
-            <PrettyView data={request} type="request" />
-          ) : (
-            <RawView content={requestToRaw(request)} />
-          )
-        ) : viewMode === "pretty" ? (
-          <PrettyView data={response} type="response" />
-        ) : (
-          <RawView content={responseToRaw(response)} />
-        )}
-      </div>
+      ) : (
+        <>
+          <div class="flex items-center border-b border-border shrink-0">
+            <div class="flex">
+              <TabButton
+                active={tab === "request"}
+                onClick={() => setTab("request")}
+              >
+                Request
+              </TabButton>
+              <TabButton
+                active={tab === "response"}
+                onClick={() => setTab("response")}
+              >
+                Response
+              </TabButton>
+            </div>
+            <div class="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleCopy}
+                class="px-3 p-1.5 text-muted-foreground hover:text-accent transition-colors cursor-pointer"
+                title="Copy to clipboard"
+              >
+                <Copy class="h-4 w-4" />
+              </button>
+              <TabButton
+                active={viewMode === "pretty"}
+                onClick={() => setViewMode("pretty")}
+              >
+                Pretty
+              </TabButton>
+              <TabButton
+                active={viewMode === "raw"}
+                onClick={() => setViewMode("raw")}
+              >
+                Raw
+              </TabButton>
+            </div>
+          </div>
+          <div ref={scrollRef} class="flex-1 overflow-auto p-3">
+            {tab === "request" ? (
+              viewMode === "pretty" ? (
+                <PrettyView data={detail.request} type="request" />
+              ) : (
+                <RawView content={requestToRaw(detail.request)} />
+              )
+            ) : viewMode === "pretty" ? (
+              <PrettyView data={detail.response} type="response" />
+            ) : (
+              <RawView content={responseToRaw(detail.response)} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { config } from "@wailsapp/models"
 import { FolderSearch, Moon, Sun } from "lucide-preact"
 import { useState } from "preact/hooks"
+import type { Errors } from "../types/settings"
 import { Modal } from "./modal"
 
 interface SettingsModalProps {
@@ -8,22 +9,20 @@ interface SettingsModalProps {
   onSave: (config: config.ConfigDTO) => void
   onToggleTheme: () => void
   onClose: () => void
-  onBrowseCert?: () => Promise<string | undefined>
-}
-
-interface Errors {
-  certPath?: string
-  certKeyPath?: string
-  serverHost?: string
-  serverPort?: string
-  appearance?: string
+  onBrowseCert: () => Promise<string | undefined>
 }
 
 function validate(config: config.ConfigDTO): Errors {
   const errs: Errors = {}
-  if (!config.certPath.trim()) errs.certPath = "Required"
-  if (!config.certKeyPath.trim()) errs.certKeyPath = "Required"
-  if (!config.serverHost.trim()) errs.serverHost = "Required"
+  if (!config.certPath.trim()) {
+    errs.certPath = "Required"
+  }
+  if (!config.certKeyPath.trim()) {
+    errs.certKeyPath = "Required"
+  }
+  if (!config.serverHost.trim()) {
+    errs.serverHost = "Required"
+  }
   if (
     !config.serverPort ||
     config.serverPort <= 0 ||
@@ -48,14 +47,6 @@ export function SettingsModal({
   const [confirm, setConfirm] = useState(false)
   const dirty = JSON.stringify(config) !== JSON.stringify(initial)
 
-  const handleClose = () => {
-    if (dirty) {
-      setConfirm(true)
-      return
-    }
-    onClose()
-  }
-
   const set = (field: keyof config.ConfigDTO, value: string) => {
     setConfig((prev) => ({
       ...prev,
@@ -66,6 +57,14 @@ export function SettingsModal({
       delete next[field]
       return next
     })
+  }
+
+  const handleClose = () => {
+    if (dirty) {
+      setConfirm(true)
+      return
+    }
+    onClose()
   }
 
   const handleSave = () => {
@@ -110,8 +109,10 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={async () => {
-                  const path = await onBrowseCert?.()
-                  if (path) set("certPath", path)
+                  const path = await onBrowseCert()
+                  if (path) {
+                    set("certPath", path)
+                  }
                 }}
                 class="p-2 text-foreground border border-border rounded transition-opacity hover:opacity-80 cursor-pointer shrink-0"
                 title="Search in file explorer"
@@ -149,8 +150,10 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={async () => {
-                  const path = await onBrowseCert?.()
-                  if (path) set("certKeyPath", path)
+                  const path = await onBrowseCert()
+                  if (path) {
+                    set("certKeyPath", path)
+                  }
                 }}
                 class="p-2 text-foreground border border-border rounded transition-opacity hover:opacity-80 cursor-pointer shrink-0"
                 title="Search in file explorer"

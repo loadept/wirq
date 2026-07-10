@@ -1,36 +1,37 @@
-import { SaveLogs } from "@wailsapp/app"
+import { ClearLogs, ExportLogs } from "@wailsapp/app"
 import { BrushCleaning, Download, Search } from "lucide-preact"
 import { useEffect, useMemo, useRef, useState } from "preact/hooks"
+import { useLogs } from "../lib/hooks/logList"
 import { useToast } from "../lib/providers/toast"
 import { matchFilter } from "../lib/utils/filter"
-import type { ProxyLog } from "../types/index"
 import { FilterModal } from "./filter-modal"
 import { RequestRow } from "./request-row"
 
 interface RequestListProps {
   connected: boolean
-  logs: ProxyLog[]
-  selectedIndex: number | null
-  onSelect: (index: number | null) => void
-  onClear: () => void
+  selectedId: number | null
+  onSelectId: (index: number | null) => void
 }
 
 export function RequestList({
   connected,
-  logs,
-  selectedIndex,
-  onSelect,
-  onClear,
+  selectedId,
+  onSelectId,
 }: RequestListProps) {
+  const { logs, setLogs } = useLogs(connected)
   const [filterText, setFilterText] = useState("")
   const [showFilter, setShowFilter] = useState(false)
+
+  const toast = useToast()
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoScroll = useRef(true)
 
   const filteredLogs = useMemo(() => {
-    if (!filterText.trim()) return logs
+    if (!filterText.trim()) {
+      return logs
+    }
     return logs.filter((log) => matchFilter(log, filterText))
   }, [logs, filterText])
 
@@ -41,23 +42,26 @@ export function RequestList({
   }, [logs.length])
 
   useEffect(() => {
-    if (
-      selectedIndex !== null &&
-      filterText &&
-      !matchFilter(logs[selectedIndex], filterText)
-    ) {
-      onSelect(null)
+    if (selectedId !== null && filterText) {
+      onSelectId(null)
     }
-  }, [filterText, selectedIndex, logs, onSelect])
+  }, [filterText, selectedId, onSelectId])
 
-  const toast = useToast()
+  const handleClear = async () => {
+    await ClearLogs()
+    setLogs([])
+    onSelectId(null)
+  }
 
   const handleExport = async () => {
     try {
-      const data = JSON.stringify(filteredLogs, null, 2)
-      const path = await SaveLogs(data, "wirq_logs.json")
+      const logIds = filteredLogs.map((l) => l.id)
+      const path = await ExportLogs(logIds, "wirq_logs.json")
       if (!path) return
-      toast.addToast("success", `Exported ${filteredLogs.length} logs`)
+      toast.addToast(
+        "success",
+        `${logIds.length} logs were exported to ${path}`,
+      )
     } catch (error) {
       const message = typeof error === "string" ? error : "unknown error"
       toast.addToast("error", message)
@@ -75,7 +79,7 @@ export function RequestList({
 
   return (
     <div class="flex flex-col flex-1 min-h-0">
-      <div class="grid grid-cols-3 items-center grap-3 px-3 py-1.5 border-b border-border bg-card shrink-0">
+      <div class="grid grid-cols-3 items-center gap-3 px-3 py-1.5 border-b border-border bg-card shrink-0">
         <div class="flex items-center gap-3">
           <button
             type="button"
@@ -111,7 +115,7 @@ export function RequestList({
           <button
             type="button"
             disabled={logs.length === 0}
-            onClick={onClear}
+            onClick={handleClear}
             class="p-1 text-foreground transition-colors enabled:hover:text-accent enabled:cursor-pointer disabled:text-muted-foreground"
             title="Clear logs"
           >
@@ -148,17 +152,14 @@ export function RequestList({
               No requests match the filter
             </div>
           ) : (
-            filteredLogs.map((log) => {
-              const originalIndex = logs.indexOf(log)
-              return (
-                <RequestRow
-                  key={originalIndex}
-                  event={log}
-                  selected={selectedIndex === originalIndex}
-                  onClick={() => onSelect(originalIndex)}
-                />
-              )
-            })
+            filteredLogs.map((log) => (
+              <RequestRow
+                key={log.id}
+                log={log}
+                selected={selectedId === log.id}
+                onClick={() => onSelectId(log.id)}
+              />
+            ))
           )}
           <div ref={bottomRef} />
         </div>

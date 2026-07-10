@@ -1,4 +1,4 @@
-import type { ProxyLog } from "../../types/index"
+import type { LogSummary } from "../../types/index"
 
 interface FilterToken {
   key?: string
@@ -16,13 +16,16 @@ const parseToken = (token: string): FilterToken => {
   const key = token.slice(0, idx)
   const val = token.slice(idx + 1)
 
-  if (!VALID_KEYS.includes(key))
+  if (!VALID_KEYS.includes(key)) {
     return { value: token, type: "substring", raw: token }
+  }
 
-  if (val.startsWith("="))
+  if (val.startsWith("=")) {
     return { key, value: val.slice(1), type: "exact", raw: token }
-  if (val.startsWith("/") && val.endsWith("/") && val.length > 1)
+  }
+  if (val.startsWith("/") && val.endsWith("/") && val.length > 1) {
     return { key, value: val.slice(1, -1), type: "regex", raw: token }
+  }
 
   return { key, value: val, type: "substring", raw: token }
 }
@@ -42,33 +45,33 @@ const matchField = (field: string, filter: FilterToken): boolean => {
   }
 }
 
-const matchToken = (log: ProxyLog, token: string): boolean => {
+const matchToken = (log: LogSummary, token: string): boolean => {
   const parsed = parseToken(token)
 
   if (!parsed.key) {
-    const searchIn = [log.request.url, log.request.host].join(" ")
+    const searchIn = [log.url, log.host].join(" ")
     return searchIn.toLowerCase().includes(parsed.value.toLowerCase())
   }
 
   switch (parsed.key) {
     case "host":
-      return matchField(log.request.host, parsed)
+      return matchField(log.host, parsed)
     case "method":
-      return matchField(log.request.method, parsed)
+      return matchField(log.method, parsed)
     case "url":
-      return matchField(log.request.url, parsed)
+      return matchField(log.url, parsed)
     case "proto":
-      return matchField(log.request.proto, parsed)
+      return matchField(log.proto, parsed)
     case "status":
-      return matchField(String(log.response.statusCode), parsed)
+      return matchField(String(log.statusCode), parsed)
     case "tls":
-      return parsed.value === "true" ? log.request.tls : !log.request.tls
+      return parsed.value === "true" ? log.tls : !log.tls
     default:
       return true
   }
 }
 
-export const matchFilter = (log: ProxyLog, text: string): boolean => {
+export const matchFilter = (log: LogSummary, text: string): boolean => {
   if (!text.trim()) return true
   return text
     .trim()

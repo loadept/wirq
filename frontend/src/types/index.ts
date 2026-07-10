@@ -19,6 +19,16 @@ export interface ResponseLog {
   isBase64: boolean
 }
 
+export interface LogSummary {
+  id: number
+  host: string
+  method: string
+  url: string
+  proto: string
+  statusCode: number
+  tls: boolean
+}
+
 export interface ProxyLog {
   request: RequestLog
   response: ResponseLog

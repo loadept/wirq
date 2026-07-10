@@ -1,5 +1,6 @@
 import type { ComponentChildren } from "preact"
 import { createContext, h as jsx } from "preact"
+import { createPortal } from "preact/compat"
 import { useCallback, useContext, useRef, useState } from "preact/hooks"
 import type { Toast, ToastContextValue, ToastType } from "../../types"
 
@@ -39,35 +40,37 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
     [removeToast],
   )
 
-  return jsx(
-    ToastContext.Provider,
-    { value: { addToast } },
-    children,
+  return createPortal(
     jsx(
-      "div",
-      {
-        class:
-          "fixed top-26 right-4 z-9999 flex flex-col gap-2 pointer-events-none",
-      },
-      toasts.map((toast) =>
-        jsx(
-          "div",
-          {
-            key: toast.id,
-            class: `pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${
-              toast.leaving ? "animate-fade-out" : "animate-fade-in"
-            } ${
-              toast.type === "error"
-                ? "bg-destructive text-destructive-foreground"
-                : toast.type === "success"
-                  ? "bg-green text-green-foreground"
-                  : "bg-muted text-foreground"
-            }`,
-          },
-          jsx("span", { class: "flex-1 wrap-break-word" }, toast.message),
+      ToastContext.Provider,
+      { value: { addToast } },
+      children,
+      jsx(
+        "div",
+        {
+          class: "fixed top-26 right-4 flex flex-col gap-2 pointer-events-none",
+        },
+        toasts.map((toast) =>
+          jsx(
+            "div",
+            {
+              key: toast.id,
+              class: `pointer-events-auto px-3 py-2 text-xs rounded shadow-lg max-w-xs ${
+                toast.leaving ? "animate-fade-out" : "animate-fade-in"
+              } ${
+                toast.type === "error"
+                  ? "bg-destructive text-destructive-foreground"
+                  : toast.type === "success"
+                    ? "bg-green text-green-foreground"
+                    : "bg-muted text-foreground"
+              }`,
+            },
+            jsx("span", { class: "flex-1 wrap-break-word" }, toast.message),
+          ),
         ),
       ),
     ),
+    document.body,
   )
 }
 

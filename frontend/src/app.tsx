@@ -1,177 +1,119 @@
-import {
-  LoadConfig,
-  SaveConfig,
-  SelectCertFile,
-  StartServer,
-  StopServer,
-} from "@wailsapp/app"
+import { StartServer, StopServer } from "@wailsapp/app"
 import type { config } from "@wailsapp/models"
-import { EventsOn, WindowShow } from "@wailsapp/runtime"
-import { useCallback, useEffect, useState } from "preact/hooks"
+import { EventsOn } from "@wailsapp/runtime"
+import { useEffect, useState } from "preact/hooks"
 import { DetailPanel } from "./components/detail-panel"
 import { Header } from "./components/header"
 import { RequestList } from "./components/request-list"
 import { SettingsModal } from "./components/settings-modal"
+import { useBootstrap } from "./lib/hooks/bootstrap"
 import { useToast } from "./lib/providers/toast"
-import type { ProxyLog, Theme } from "./types/index"
 
 export const App = () => {
-  const [logs, setLogs] = useState<ProxyLog[]>([])
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [theme, setTheme] = useState<Theme>("dark")
+  const {
+    config,
+    settingsOpen,
+    error,
+    saveSettings,
+    closeSettings,
+    browseCert,
+    toggleTheme,
+    setSettingsOpen,
+    setError,
+  } = useBootstrap()
+
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [connected, setConnected] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [config, setConfig] = useState<config.ConfigDTO>({
-    certPath: "",
-    certKeyPath: "",
-    serverHost: "",
-    serverPort: 0,
-    appearance: "",
-  })
   const [starting, setStarting] = useState(false)
   const [shuttingDown, setShuttingDown] = useState(false)
   const toast = useToast()
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark")
-  }, [theme])
-
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const [cfg] = await Promise.all([LoadConfig()])
-
-        setConfig(cfg)
-        if (cfg.appearance) {
-          setTheme(cfg.appearance as Theme)
-        }
-        if (!cfg.certPath.trim() || !cfg.certKeyPath.trim()) {
-          setSettingsOpen(true)
-        }
-      } catch (error) {
-        const message = typeof error === "string" ? error : "unknown error"
-        toast.addToast("error", message)
-      } finally {
-        WindowShow()
-      }
-    })()
-  }, [])
+    if (error) {
+      toast.addToast("error", error)
+      setError(null)
+    }
+  }, [error])
 
   useEffect(() => {
     if (connected) {
-      const cancelLog = EventsOn("proxy:log", (log: ProxyLog) => {
-        setLogs((prev) => [...prev, log])
-      })
-
-      const cancelErr = EventsOn("proxy:error", (error: string) => {
+      const cancel = EventsOn("proxy:error", (error: string) => {
         toast.addToast("error", `Proxy error: ${error}`)
       })
-
-      return () => {
-        cancelLog()
-        cancelErr()
-      }
+      return cancel
     }
   }, [connected])
 
-  const handleClear = () => {
-    setLogs([])
-    setSelectedIndex(null)
-  }
-
-  const handleSave = async (cfg: config.ConfigDTO) => {
+  const handleSaveSettings = async (cfg: config.ConfigDTO) => {
     try {
-      await SaveConfig(cfg)
-
-      setConfig(cfg)
-      setTheme(cfg.appearance as Theme)
+      await saveSettings({ cfg, connected })
+      setConnected(false)
       setSettingsOpen(false)
-      if (connected) {
-        await StopServer()
-        setConnected(false)
-      }
       toast.addToast("success", "Settings saved")
     } catch (error) {
-      const message = typeof error === "string" ? error : "unknown error"
-      toast.addToast("error", message)
+      toast.addToast(
+        "error",
+        typeof error === "string" ? error : "unknown error",
+      )
     }
   }
 
-  const handleClose = useCallback(() => {
-    setTheme(config.appearance as Theme)
-    setSettingsOpen(false)
-  }, [config.appearance])
-
-  const handleBrowseCert = async () => {
-    try {
-      return await SelectCertFile()
-    } catch (error) {
-      const message = typeof error === "string" ? error : "unknown error"
-      toast.addToast("error", message)
-    }
-  }
-
-  const handleStart = async () => {
+  const handleStartSrv = async () => {
     setStarting(true)
     try {
       await StartServer(config)
-
       setConnected(true)
       toast.addToast("success", "Proxy started")
     } catch (error) {
-      const message = typeof error === "string" ? error : "unknown error"
-      toast.addToast("error", `Failed to start proxy: ${message}`)
+      toast.addToast(
+        "error",
+        `Failed to start proxy: ${typeof error === "string" ? error : "unknown error"}`,
+      )
     } finally {
       setStarting(false)
     }
   }
 
-  const handleShutdown = async () => {
+  const handleShutdownSrv = async () => {
     setShuttingDown(true)
     try {
       await StopServer()
-
       setConnected(false)
       toast.addToast("info", "Proxy stopped")
     } catch (error) {
-      const message = typeof error === "string" ? error : "unknown error"
-      toast.addToast("error", `Failed to stop proxy: ${message}`)
+      toast.addToast(
+        "error",
+        `Failed to stop proxy: ${typeof error === "string" ? error : "unknown error"}`,
+      )
     } finally {
       setShuttingDown(false)
     }
   }
 
-  const selectedLog =
-    selectedIndex !== null ? (logs[selectedIndex] ?? null) : null
-
   return (
-    <div class="flex flex-col h-screen bg-background text-foreground">
+    <div class="flex flex-col bg-background text-foreground h-screen">
       <Header
-        port={config.serverPort}
+        port={config?.serverPort ?? 0}
         connected={connected}
         starting={starting}
         shuttingDown={shuttingDown}
-        onStart={handleStart}
-        onShutdown={handleShutdown}
+        onStart={handleStartSrv}
+        onShutdown={handleShutdownSrv}
         onSettings={() => setSettingsOpen(true)}
       />
       <RequestList
         connected={connected}
-        logs={logs}
-        selectedIndex={selectedIndex}
-        onSelect={setSelectedIndex}
-        onClear={handleClear}
+        selectedId={selectedId}
+        onSelectId={setSelectedId}
       />
-      {selectedLog && <DetailPanel log={selectedLog} />}
-      {settingsOpen && (
+      {selectedId && <DetailPanel logId={selectedId} />}
+      {settingsOpen && config && (
         <SettingsModal
           initial={config}
-          onSave={handleSave}
-          onToggleTheme={() =>
-            setTheme((prev: Theme) => (prev === "dark" ? "light" : "dark"))
-          }
-          onClose={handleClose}
-          onBrowseCert={handleBrowseCert}
+          onSave={handleSaveSettings}
+          onToggleTheme={toggleTheme}
+          onClose={closeSettings}
+          onBrowseCert={browseCert}
         />
       )}
     </div>

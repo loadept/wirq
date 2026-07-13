@@ -1,5 +1,6 @@
 import { Search } from "lucide-preact"
-import { useMemo, useRef, useState } from "preact/hooks"
+import type { TargetedEvent } from "preact"
+import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { parseTokens } from "../lib/utils/filter"
 import { Modal } from "./modal"
 
@@ -19,24 +20,26 @@ export function FilterModal({
 
   const tokens = useMemo(() => parseTokens(inputText), [inputText])
 
-  const handleApply = () => {
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const handleSubmit = (e: TargetedEvent<HTMLFormElement, SubmitEvent>) => {
+    e.preventDefault()
     onApply(inputText)
     onClose()
   }
 
   return (
     <Modal title="Filter">
-      <div class="p-4 space-y-3">
+      <form onSubmit={handleSubmit} class="p-4 space-y-3">
         <div class="relative">
           <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
           <input
             ref={inputRef}
             type="text"
             value={inputText}
-            onInput={(e) => setInputText((e.target as HTMLInputElement).value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleApply()
-            }}
+            onInput={(e) => setInputText(e.currentTarget.value)}
             placeholder="host:google method:GET status:/^4/"
             class="w-full pl-8 pr-2.5 py-1.5 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
@@ -71,14 +74,13 @@ export function FilterModal({
             Cancel
           </button>
           <button
-            type="button"
-            onClick={handleApply}
+            type="submit"
             class="px-4 py-1.5 text-xs bg-primary text-primary-foreground hover:opacity-80 rounded cursor-pointer"
           >
             Apply
           </button>
         </div>
-      </div>
+      </form>
     </Modal>
   )
 }

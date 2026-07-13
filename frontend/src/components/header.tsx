@@ -5,9 +5,9 @@ interface HeaderProps {
   port: number
   connected: boolean
   starting: boolean
-  shuttingDown: boolean
+  stopping: boolean
   onStart: () => void
-  onShutdown: () => void
+  onStop: () => void
   onSettings: () => void
 }
 
@@ -15,9 +15,9 @@ export function Header({
   port,
   connected,
   starting,
-  shuttingDown,
+  stopping,
   onStart,
-  onShutdown,
+  onStop,
   onSettings,
 }: HeaderProps) {
   return (
@@ -27,8 +27,8 @@ export function Header({
       <div class="flex justify-center gap-2">
         <button
           type="button"
-          onClick={connected ? onShutdown : onStart}
-          disabled={starting || shuttingDown}
+          onClick={connected ? onStop : onStart}
+          disabled={starting || stopping}
           class={`flex items-center justify-center gap-1 min-w-25 px-2.5 py-1 text-xs rounded transition-all duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-auto enabled:hover:opacity-90 ${
             connected
               ? " bg-destructive text-destructive-foreground"
@@ -36,7 +36,7 @@ export function Header({
           }`}
         >
           {connected ? (
-            shuttingDown ? (
+            stopping ? (
               <>
                 <Loader class="h-3.5 w-3.5 animate-spin" />
                 Stopping

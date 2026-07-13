@@ -1,4 +1,3 @@
-import { StartServer, StopServer } from "@wailsapp/app"
 import type { config } from "@wailsapp/models"
 import { EventsOn } from "@wailsapp/runtime"
 import { useEffect, useState } from "preact/hooks"
@@ -6,34 +5,34 @@ import { DetailPanel } from "./components/detail-panel"
 import { Header } from "./components/header"
 import { RequestList } from "./components/request-list"
 import { SettingsModal } from "./components/settings-modal"
-import { useBootstrap } from "./lib/hooks/bootstrap"
+import { useBootstrap, useServer } from "./lib/hooks/bootstrap"
 import { useToast } from "./lib/providers/toast"
 
 export const App = () => {
   const {
     config,
     settingsOpen,
-    error,
+    bootError,
     saveSettings,
     closeSettings,
     browseCert,
     toggleTheme,
     setSettingsOpen,
-    setError,
+    setBootError,
   } = useBootstrap()
 
+  const { connected, starting, stopping, start, stop } = useServer({
+    cfg: config,
+  })
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [connected, setConnected] = useState(false)
-  const [starting, setStarting] = useState(false)
-  const [shuttingDown, setShuttingDown] = useState(false)
   const toast = useToast()
 
   useEffect(() => {
-    if (error) {
-      toast.addToast("error", error)
-      setError(null)
+    if (bootError) {
+      toast.addToast("error", bootError)
+      setBootError(null)
     }
-  }, [error])
+  }, [bootError])
 
   useEffect(() => {
     if (connected) {
@@ -46,47 +45,32 @@ export const App = () => {
 
   const handleSaveSettings = async (cfg: config.ConfigDTO) => {
     try {
-      await saveSettings({ cfg, connected })
-      setConnected(false)
+      if (connected) {
+        await stop()
+      }
+      await saveSettings({ cfg })
       setSettingsOpen(false)
       toast.addToast("success", "Settings saved")
-    } catch (error) {
-      toast.addToast(
-        "error",
-        typeof error === "string" ? error : "unknown error",
-      )
+    } catch (err) {
+      toast.addToast("error", err as string)
     }
   }
 
-  const handleStartSrv = async () => {
-    setStarting(true)
+  const handleStartServer = async () => {
     try {
-      await StartServer(config)
-      setConnected(true)
+      await start()
       toast.addToast("success", "Proxy started")
-    } catch (error) {
-      toast.addToast(
-        "error",
-        `Failed to start proxy: ${typeof error === "string" ? error : "unknown error"}`,
-      )
-    } finally {
-      setStarting(false)
+    } catch (err) {
+      toast.addToast("error", `Failed to start proxy: ${err}`)
     }
   }
 
-  const handleShutdownSrv = async () => {
-    setShuttingDown(true)
+  const handleStopServer = async () => {
     try {
-      await StopServer()
-      setConnected(false)
+      await stop()
       toast.addToast("info", "Proxy stopped")
-    } catch (error) {
-      toast.addToast(
-        "error",
-        `Failed to stop proxy: ${typeof error === "string" ? error : "unknown error"}`,
-      )
-    } finally {
-      setShuttingDown(false)
+    } catch (err) {
+      toast.addToast("error", `Failed to stop proxy: ${err}`)
     }
   }
 
@@ -96,9 +80,9 @@ export const App = () => {
         port={config?.serverPort ?? 0}
         connected={connected}
         starting={starting}
-        shuttingDown={shuttingDown}
-        onStart={handleStartSrv}
-        onShutdown={handleShutdownSrv}
+        stopping={stopping}
+        onStart={handleStartServer}
+        onStop={handleStopServer}
         onSettings={() => setSettingsOpen(true)}
       />
       <RequestList
@@ -107,12 +91,12 @@ export const App = () => {
         onSelectId={setSelectedId}
       />
       {selectedId && <DetailPanel logId={selectedId} />}
-      {settingsOpen && config && (
+      {settingsOpen && (
         <SettingsModal
           initial={config}
           onSave={handleSaveSettings}
-          onToggleTheme={toggleTheme}
           onClose={closeSettings}
+          onToggleTheme={toggleTheme}
           onBrowseCert={browseCert}
         />
       )}

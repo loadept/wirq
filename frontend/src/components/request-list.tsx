@@ -43,9 +43,12 @@ export function RequestList({
 
   useEffect(() => {
     if (selectedId !== null && filterText) {
-      onSelectId(null)
+      const log = logs.find((l) => l.id === selectedId)
+      if (log && !matchFilter(log, filterText)) {
+        onSelectId(null)
+      }
     }
-  }, [filterText, selectedId, onSelectId])
+  }, [logs, filterText, selectedId, onSelectId])
 
   const handleClear = async () => {
     await ClearLogs()
@@ -57,7 +60,9 @@ export function RequestList({
     try {
       const logIds = filteredLogs.map((l) => l.id)
       const path = await ExportLogs(logIds, "wirq_logs.json")
-      if (!path) return
+      if (!path) {
+        return
+      }
       toast.addToast(
         "success",
         `${logIds.length} logs were exported to ${path}`,
@@ -70,7 +75,9 @@ export function RequestList({
 
   const handleScroll = () => {
     const el = containerRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     const threshold = 40
     const atBottom =
       el.scrollHeight - el.scrollTop - el.clientHeight < threshold

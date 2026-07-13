@@ -1,63 +1,30 @@
 import type { config } from "@wailsapp/models"
-import { FolderSearch, Moon, Sun } from "lucide-preact"
+import { FolderSearch } from "lucide-preact"
+import type { TargetedEvent } from "preact"
 import { useState } from "preact/hooks"
-import type { Errors } from "../types/settings"
+import { SettingsSchema } from "../schemas/settings"
 import { Modal } from "./modal"
 
 interface SettingsModalProps {
   initial: config.ConfigDTO
   onSave: (config: config.ConfigDTO) => void
-  onToggleTheme: () => void
   onClose: () => void
+  onToggleTheme: () => void
   onBrowseCert: () => Promise<string | undefined>
-}
-
-function validate(config: config.ConfigDTO): Errors {
-  const errs: Errors = {}
-  if (!config.certPath.trim()) {
-    errs.certPath = "Required"
-  }
-  if (!config.certKeyPath.trim()) {
-    errs.certKeyPath = "Required"
-  }
-  if (!config.serverHost.trim()) {
-    errs.serverHost = "Required"
-  }
-  if (
-    !config.serverPort ||
-    config.serverPort <= 0 ||
-    config.serverPort > 65535
-  ) {
-    errs.serverPort = "Required (1-65535)"
-  } else if (!Number.isInteger(config.serverPort)) {
-    errs.serverPort = "Must be a whole number"
-  }
-  return errs
 }
 
 export function SettingsModal({
   initial,
   onSave,
-  onToggleTheme,
   onClose,
+  onToggleTheme,
   onBrowseCert,
 }: SettingsModalProps) {
   const [config, setConfig] = useState<config.ConfigDTO>(initial)
-  const [errors, setErrors] = useState<Errors>({})
   const [confirm, setConfirm] = useState(false)
-  const dirty = JSON.stringify(config) !== JSON.stringify(initial)
-
-  const set = (field: keyof config.ConfigDTO, value: string) => {
-    setConfig((prev) => ({
-      ...prev,
-      [field]: field === "serverPort" ? Number(value) : value,
-    }))
-    setErrors((prev) => {
-      const next = { ...prev }
-      delete next[field]
-      return next
-    })
-  }
+  const [dirty, setDirty] = useState(false)
+  const [issues, setIssues] = useState<Record<string, string>>({})
+  const hasIssues = Object.keys(issues).length > 0
 
   const handleClose = () => {
     if (dirty) {
@@ -65,214 +32,221 @@ export function SettingsModal({
       return
     }
     onClose()
+    setDirty(false)
   }
 
-  const handleSave = () => {
-    const errs = validate(config)
-    setErrors(errs)
-    if (Object.keys(errs).length > 0) return
-    onSave(config)
+  const setValue = (field: keyof config.ConfigDTO, value: string) => {
+    setDirty(true)
+    setConfig((prev) => ({
+      ...prev,
+      [field]: field === "serverPort" ? Number(value) : value,
+    }))
+    setIssues((prev) => {
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
   }
 
-  const hasErrors = Object.keys(errors).length > 0
+  const handleBrowse = async (field: "certPath" | "certKeyPath") => {
+    const path = await onBrowseCert()
+    if (path) {
+      setValue(field, path)
+    }
+  }
+
+  function handleSubmit(e: TargetedEvent<HTMLFormElement, SubmitEvent>) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const result = SettingsSchema.safeParse(config)
+
+    form.querySelectorAll("[data-error]").forEach((el) => {
+      el.removeAttribute("data-error")
+    })
+
+    if (!result.success) {
+      const newErrors: Record<string, string> = {}
+
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as string
+        newErrors[field] = issue.message
+        form
+          .querySelector(`[name="${field}"]`)
+          ?.setAttribute("data-error", "true")
+      }
+      setIssues(newErrors)
+      return
+    }
+
+    onSave(result.data)
+    setDirty(false)
+  }
 
   return (
     <Modal title="Settings">
-      <div class="p-4 space-y-5 overflow-y-auto max-h-[70vh]">
-        <fieldset class="space-y-3">
-          <legend class="text-xs tracking-wider text-primary">
-            TLS Certificates
-          </legend>
+      <form onSubmit={handleSubmit}>
+        <div class="p-4 space-y-5 overflow-y-auto max-h-[70vh]">
+          {hasIssues && (
+            <p class="text-xs text-destructive">
+              {issues[Object.keys(issues)[0]]}
+            </p>
+          )}
 
-          <div>
-            <label
-              htmlFor="ca-cert"
-              class="block text-xs tracking-wider text-muted-foreground mb-1"
-            >
-              CA Certificate (.pem)
-            </label>
-            <div class="flex gap-1 items-start">
-              <div class="flex-1">
+          <fieldset class="space-y-3">
+            <legend class="text-xs tracking-wider text-primary">
+              TLS Certificates
+            </legend>
+
+            <div>
+              <label
+                htmlFor="certPath"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
+              >
+                CA Certificate (.pem)
+              </label>
+              <div class="flex gap-1">
                 <input
-                  id="ca-cert"
+                  id="certPath"
+                  name="certPath"
                   type="text"
                   value={config.certPath}
-                  onInput={(e) =>
-                    set("certPath", (e.target as HTMLInputElement).value)
-                  }
-                  class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                    errors.certPath ? "border-destructive" : "border-border"
-                  }`}
+                  onInput={(e) => setValue("certPath", e.currentTarget.value)}
+                  class="flex-1 px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
                   placeholder="/path/to/rootCA.pem"
                 />
+                <button
+                  type="button"
+                  onClick={async () => handleBrowse("certPath")}
+                  class="p-2 text-foreground hover:text-accent transition-colors cursor-pointer shrink-0"
+                  title="Search in file explorer"
+                >
+                  <FolderSearch class="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  const path = await onBrowseCert()
-                  if (path) {
-                    set("certPath", path)
-                  }
-                }}
-                class="p-2 text-foreground border border-border rounded transition-opacity hover:opacity-80 cursor-pointer shrink-0"
-                title="Search in file explorer"
-              >
-                <FolderSearch class="h-4 w-4" />
-              </button>
             </div>
-            {errors.certPath && (
-              <p class="text-xs text-destructive mt-0.5">{errors.certPath}</p>
-            )}
-          </div>
 
-          <div>
-            <label
-              htmlFor="ca-key"
-              class="block text-xs tracking-wider text-muted-foreground mb-1"
-            >
-              CA Key (.pem)
-            </label>
-            <div class="flex gap-1 items-start">
-              <div class="flex-1">
+            <div>
+              <label
+                htmlFor="certKeyPath"
+                class="block text-xs tracking-wider text-muted-foreground mb-1"
+              >
+                CA Key (.pem)
+              </label>
+              <div class="flex gap-1 items-start">
                 <input
-                  id="ca-key"
+                  id="certKeyPath"
+                  name="certKeyPath"
                   type="text"
                   value={config.certKeyPath}
                   onInput={(e) =>
-                    set("certKeyPath", (e.target as HTMLInputElement).value)
+                    setValue("certKeyPath", e.currentTarget.value)
                   }
-                  class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                    errors.certKeyPath ? "border-destructive" : "border-border"
-                  }`}
+                  class="flex-1 px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
                   placeholder="/path/to/rootCA-key.pem"
                 />
+                <button
+                  type="button"
+                  onClick={async () => handleBrowse("certKeyPath")}
+                  class="p-2 text-foreground hover:text-accent transition-colors cursor-pointer shrink-0"
+                  title="Search in file explorer"
+                >
+                  <FolderSearch class="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  const path = await onBrowseCert()
-                  if (path) {
-                    set("certKeyPath", path)
-                  }
-                }}
-                class="p-2 text-foreground border border-border rounded transition-opacity hover:opacity-80 cursor-pointer shrink-0"
-                title="Search in file explorer"
-              >
-                <FolderSearch class="h-4 w-4" />
-              </button>
             </div>
-            {errors.certKeyPath && (
-              <p class="text-xs text-destructive mt-0.5">
-                {errors.certKeyPath}
-              </p>
-            )}
-          </div>
-        </fieldset>
+          </fieldset>
 
-        <fieldset class="space-y-3">
-          <legend class="text-xs tracking-wider text-primary">Server</legend>
+          <fieldset class="space-y-3">
+            <legend class="text-xs tracking-wider text-primary">Server</legend>
 
-          <div class="flex gap-2">
-            <div class="flex-1 min-w-0">
-              <label
-                htmlFor="server-host"
-                class="block text-xs tracking-wider text-muted-foreground mb-1"
-              >
-                Host
+            <div class="flex gap-2">
+              <div class="flex-1 min-w-0">
+                <label
+                  htmlFor="serverHost"
+                  class="block text-xs tracking-wider text-muted-foreground mb-1"
+                >
+                  Host
+                </label>
+                <input
+                  id="serverHost"
+                  name="serverHost"
+                  type="text"
+                  value={config.serverHost}
+                  onInput={(e) => setValue("serverHost", e.currentTarget.value)}
+                  class="mt-1 w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
+                  placeholder="0.0.0.0"
+                />
+              </div>
+
+              <div class="w-50 shrink-0">
+                <label
+                  htmlFor="serverPort"
+                  class="block text-xs tracking-wider text-muted-foreground mb-1"
+                >
+                  Port
+                </label>
+                <input
+                  id="serverPort"
+                  name="serverPort"
+                  type="number"
+                  value={config.serverPort}
+                  onInput={(e) => setValue("serverPort", e.currentTarget.value)}
+                  class="mt-1 w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
+                  placeholder="3100"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-3">
+            <legend class="text-xs tracking-wider text-primary">
+              Appearance
+            </legend>
+            <div class="flex items-center justify-between">
+              <span class="text-xs tracking-wider text-muted-foreground">
+                Dark mode
+              </span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(config.appearance || "dark") === "dark"}
+                  onChange={() => {
+                    setValue(
+                      "appearance",
+                      config.appearance === "dark" ? "light" : "dark",
+                    )
+                    onToggleTheme()
+                  }}
+                  class="peer sr-only"
+                />
+                <span class="w-9 h-5 bg-muted rounded-full peer-checked:bg-primary transition-colors" />
+                <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-background rounded-full peer-checked:translate-x-4 transition-transform" />
               </label>
-              <input
-                id="server-host"
-                type="text"
-                value={config.serverHost}
-                onInput={(e) =>
-                  set("serverHost", (e.target as HTMLInputElement).value)
-                }
-                class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.serverHost ? "border-destructive" : "border-border"
-                }`}
-                placeholder="0.0.0.0"
-              />
-              {errors.serverHost && (
-                <p class="text-xs text-destructive mt-0.5">
-                  {errors.serverHost}
-                </p>
-              )}
             </div>
+          </fieldset>
+        </div>
 
-            <div class="w-50 shrink-0">
-              <label
-                htmlFor="server-port"
-                class="block text-xs tracking-wider text-muted-foreground mb-1"
-              >
-                Port
-              </label>
-              <input
-                id="server-port"
-                type="number"
-                value={config.serverPort}
-                onInput={(e) =>
-                  set("serverPort", (e.target as HTMLInputElement).value)
-                }
-                class={`w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring ${
-                  errors.serverPort ? "border-destructive" : "border-border"
-                }`}
-                placeholder="3100"
-              />
-              {errors.serverPort && (
-                <p class="text-xs text-destructive mt-0.5">
-                  {errors.serverPort}
-                </p>
-              )}
-            </div>
-          </div>
-        </fieldset>
-
-        <div class="flex items-center justify-between pt-2 border-t border-border">
-          <span class="text-xs tracking-wider text-foreground">Appearance</span>
+        <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
           <button
             type="button"
-            onClick={() => {
-              onToggleTheme()
-              set("appearance", config.appearance === "dark" ? "light" : "dark")
-            }}
-            class="p-1.5 text-foreground hover:text-accent transition-colors cursor-pointer"
-            title={
-              config.appearance === "dark"
-                ? "Switch to light mode"
-                : "Switch to dark mode"
-            }
+            onClick={handleClose}
+            class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            {config.appearance === "dark" ? (
-              <Sun class="h-4 w-4" />
-            ) : (
-              <Moon class="h-4 w-4" />
-            )}
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={hasIssues}
+            class={`px-4 py-1.5 text-xs transition-opacity rounded ${
+              hasIssues
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-primary text-primary-foreground hover:opacity-80 cursor-pointer"
+            }`}
+          >
+            Save
           </button>
         </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
-        <button
-          type="button"
-          onClick={handleClose}
-          class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={hasErrors}
-          class={`px-4 py-1.5 text-xs transition-opacity rounded ${
-            hasErrors
-              ? "bg-muted text-muted-foreground cursor-not-allowed"
-              : "bg-primary text-primary-foreground hover:opacity-80 cursor-pointer"
-          }`}
-        >
-          Save
-        </button>
-      </div>
-
+      </form>
       {confirm && (
         <Modal title="Unsaved Changes" class="w-80">
           <div class="p-4 space-y-3">

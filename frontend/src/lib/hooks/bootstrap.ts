@@ -2,6 +2,7 @@ import {
   LoadConfig,
   SaveConfig,
   SelectCertFile,
+  StartServer,
   StopServer,
 } from "@wailsapp/app"
 import type { config } from "@wailsapp/models"
@@ -9,7 +10,7 @@ import { WindowShow } from "@wailsapp/runtime"
 import { useEffect, useState } from "preact/hooks"
 import type { Theme } from "../../types"
 
-export const useBootstrap = () => {
+function useBootstrap() {
   const [config, setConfig] = useState<config.ConfigDTO>({
     certPath: "",
     certKeyPath: "",
@@ -19,18 +20,22 @@ export const useBootstrap = () => {
   })
   const [theme, setTheme] = useState<Theme>("dark")
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [bootError, setBootError] = useState<string | null>(null)
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark")
   }, [theme])
 
   useEffect(() => {
+    let cancelled = false
     ;(async () => {
       try {
         const cfg = await LoadConfig()
-        setConfig(cfg)
+        if (cancelled) {
+          return
+        }
 
+        setConfig(cfg)
         if (cfg.appearance) {
           setTheme(cfg.appearance as Theme)
         }
@@ -38,31 +43,30 @@ export const useBootstrap = () => {
           setSettingsOpen(true)
         }
       } catch (err) {
-        setError(typeof err === "string" ? err : "unknown error")
+        if (cancelled) {
+          return
+        }
+        setBootError(typeof err === "string" ? err : "unknown error")
         setSettingsOpen(true)
       } finally {
-        WindowShow()
+        if (!cancelled) {
+          WindowShow()
+        }
       }
     })()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const saveSettings = async ({
-    cfg,
-    connected,
-  }: {
-    cfg: config.ConfigDTO
-    connected: boolean
-  }) => {
+  const saveSettings = async ({ cfg }: { cfg: config.ConfigDTO }) => {
     try {
       await SaveConfig(cfg)
       setConfig(cfg)
       setTheme(cfg.appearance as Theme)
-
-      if (connected) {
-        await StopServer()
-      }
     } catch (err) {
-      setError(typeof err === "string" ? err : "unknown error")
+      throw typeof err === "string" ? err : "unknown error"
     }
   }
 
@@ -76,7 +80,7 @@ export const useBootstrap = () => {
       const file = await SelectCertFile()
       return file
     } catch (err) {
-      setError(typeof err === "string" ? err : "unknown error")
+      throw typeof err === "string" ? err : "unknown error"
     }
   }
 
@@ -86,14 +90,53 @@ export const useBootstrap = () => {
 
   return {
     config,
-    theme,
     settingsOpen,
-    error,
+    bootError,
     saveSettings,
     closeSettings,
     browseCert,
     toggleTheme,
     setSettingsOpen,
-    setError,
+    setBootError,
   }
 }
+
+function useServer({ cfg }: { cfg: config.ConfigDTO }) {
+  const [connected, setConnected] = useState(false)
+  const [starting, setStarting] = useState(false)
+  const [stopping, setStopping] = useState(false)
+
+  const start = async () => {
+    setStarting(true)
+    try {
+      await StartServer(cfg)
+      setConnected(true)
+    } catch (err) {
+      throw typeof err === "string" ? err : "unknown error"
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  const stop = async () => {
+    setStopping(true)
+    try {
+      await StopServer()
+      setConnected(false)
+    } catch (err) {
+      throw typeof err === "string" ? err : "unknown error"
+    } finally {
+      setStopping(false)
+    }
+  }
+
+  return {
+    connected,
+    starting,
+    stopping,
+    start,
+    stop,
+  }
+}
+
+export { useBootstrap, useServer }

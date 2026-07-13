@@ -11,7 +11,9 @@ const VALID_KEYS = ["host", "method", "status", "url", "proto", "tls"]
 
 const parseToken = (token: string): FilterToken => {
   const idx = token.indexOf(":")
-  if (idx === -1) return { value: token, type: "substring", raw: token }
+  if (idx === -1) {
+    return { value: token, type: "substring", raw: token }
+  }
 
   const key = token.slice(0, idx)
   const val = token.slice(idx + 1)
@@ -72,7 +74,9 @@ const matchToken = (log: LogSummary, token: string): boolean => {
 }
 
 export const matchFilter = (log: LogSummary, text: string): boolean => {
-  if (!text.trim()) return true
+  if (!text.trim()) {
+    return true
+  }
   return text
     .trim()
     .split(/\s+/)
@@ -80,7 +84,9 @@ export const matchFilter = (log: LogSummary, text: string): boolean => {
 }
 
 export const parseTokens = (text: string): FilterToken[] => {
-  if (!text.trim()) return []
+  if (!text.trim()) {
+    return []
+  }
   return text
     .trim()
     .split(/\s+/)

@@ -17,7 +17,9 @@ function getContentType(headers: Record<string, string[]>): string {
 
 function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
   const entries = Object.entries(headers)
-  if (entries.length === 0) return null
+  if (entries.length === 0) {
+    return null
+  }
 
   return (
     <div>
@@ -26,8 +28,8 @@ function HeadersTable({ headers }: { headers: Record<string, string[]> }) {
       </div>
       <div class="text-sm border border-border rounded overflow-hidden">
         {entries.map(([header, values]) =>
-          values.map((value) => (
-            <div class="grid grid-cols-[auto_1fr] gap-x-3 px-2 py-0.5 even:bg-muted/30">
+          values.map((value, vi) => (
+            <div key={header + vi} class="grid grid-cols-[auto_1fr] gap-x-3 px-2 py-0.5 even:bg-muted/30">
               <span class="text-primary shrink-0 whitespace-nowrap">
                 {header}:
               </span>

@@ -30,31 +30,71 @@ function tryParseJSON(text: string): unknown {
 }
 
 function formatSize(bytes: number): string {
-  if (bytes > 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  if (bytes > 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes > 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+  if (bytes > 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`
+  }
   return `${bytes} B`
 }
 
 function getFileLabel(contentType: string): string {
   const ct = contentType.toLowerCase()
-  if (ct.startsWith("image/png")) return "PNG Image"
-  if (ct.startsWith("image/jpeg")) return "JPEG Image"
-  if (ct.startsWith("image/gif")) return "GIF Image"
-  if (ct.startsWith("image/webp")) return "WebP Image"
-  if (ct.startsWith("image/svg")) return "SVG Image"
-  if (ct.startsWith("image/")) return "Image"
-  if (ct === "application/pdf") return "PDF Document"
-  if (ct.includes("zip")) return "ZIP Archive"
-  if (ct.includes("rar")) return "RAR Archive"
-  if (ct.includes("tar")) return "TAR Archive"
-  if (ct.includes("gzip") || ct.includes("gz")) return "GZip Archive"
-  if (ct.includes("compress")) return "Compressed Archive"
-  if (ct.startsWith("video/")) return "Video"
-  if (ct.startsWith("audio/")) return "Audio"
-  if (ct.includes("json")) return "JSON"
-  if (ct.includes("html")) return "HTML"
-  if (ct.includes("xml")) return "XML"
-  if (ct.includes("octet-stream")) return "Binary"
+  if (ct.startsWith("image/png")) {
+    return "PNG Image"
+  }
+  if (ct.startsWith("image/jpeg")) {
+    return "JPEG Image"
+  }
+  if (ct.startsWith("image/gif")) {
+    return "GIF Image"
+  }
+  if (ct.startsWith("image/webp")) {
+    return "WebP Image"
+  }
+  if (ct.startsWith("image/svg")) {
+    return "SVG Image"
+  }
+  if (ct.startsWith("image/")) {
+    return "Image"
+  }
+  if (ct === "application/pdf") {
+    return "PDF Document"
+  }
+  if (ct.includes("zip")) {
+    return "ZIP Archive"
+  }
+  if (ct.includes("rar")) {
+    return "RAR Archive"
+  }
+  if (ct.includes("tar")) {
+    return "TAR Archive"
+  }
+  if (ct.includes("gzip") || ct.includes("gz")) {
+    return "GZip Archive"
+  }
+  if (ct.includes("compress")) {
+    return "Compressed Archive"
+  }
+  if (ct.startsWith("video/")) {
+    return "Video"
+  }
+  if (ct.startsWith("audio/")) {
+    return "Audio"
+  }
+  if (ct.includes("json")) {
+    return "JSON"
+  }
+  if (ct.includes("html")) {
+    return "HTML"
+  }
+  if (ct.includes("xml")) {
+    return "XML"
+  }
+  if (ct.includes("octet-stream")) {
+    return "Binary"
+  }
   return contentType
 }
 
@@ -135,18 +175,23 @@ function BinaryInfoBanner({ contentType }: { contentType: string }) {
   const label = getFileLabel(contentType)
   let Icon = File
   const ct = contentType.toLowerCase()
-  if (ct.startsWith("image/")) Icon = FileImage
-  else if (ct === "application/pdf") Icon = FileType
-  else if (
+  if (ct.startsWith("image/")) {
+    Icon = FileImage
+  } else if (ct === "application/pdf") {
+    Icon = FileType
+  } else if (
     ct.includes("zip") ||
     ct.includes("rar") ||
     ct.includes("tar") ||
     ct.includes("gzip") ||
     ct.includes("compress")
-  )
+  ) {
     Icon = FileArchive
-  else if (ct.startsWith("video/")) Icon = FileVideo
-  else if (ct.startsWith("audio/")) Icon = FileAudio
+  } else if (ct.startsWith("video/")) {
+    Icon = FileVideo
+  } else if (ct.startsWith("audio/")) {
+    Icon = FileAudio
+  }
 
   return (
     <div class="text-xs text-muted-foreground space-y-1">

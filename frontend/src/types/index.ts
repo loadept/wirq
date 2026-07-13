@@ -1,24 +1,5 @@
 export type { Toast, ToastContextValue, ToastType } from "./toast"
 
-export interface RequestLog {
-  host: string
-  method: string
-  url: string
-  proto: string
-  headers: Record<string, string[]>
-  tls: boolean
-  body: unknown
-  isBase64: boolean
-}
-
-export interface ResponseLog {
-  proto: string
-  statusCode: number
-  headers: Record<string, string[]>
-  body: unknown
-  isBase64: boolean
-}
-
 export interface LogSummary {
   id: number
   host: string
@@ -27,11 +8,6 @@ export interface LogSummary {
   proto: string
   statusCode: number
   tls: boolean
-}
-
-export interface ProxyLog {
-  request: RequestLog
-  response: ResponseLog
 }
 
 export type Theme = "dark" | "light"

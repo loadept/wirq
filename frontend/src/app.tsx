@@ -5,7 +5,7 @@ import { DetailPanel } from "./components/detail-panel"
 import { Header } from "./components/header"
 import { RequestList } from "./components/request-list"
 import { SettingsModal } from "./components/settings-modal"
-import { useBootstrap, useServer } from "./lib/hooks/bootstrap"
+import { useBootstrap, useServer } from "./lib/hooks"
 import { useToast } from "./lib/providers/toast"
 
 export const App = () => {

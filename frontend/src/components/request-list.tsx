@@ -1,7 +1,7 @@
 import { ClearLogs, ExportLogs } from "@wailsapp/app"
 import { BrushCleaning, Download, Search } from "lucide-preact"
 import { useEffect, useMemo, useRef, useState } from "preact/hooks"
-import { useLogs } from "../lib/hooks/logList"
+import { useLogList } from "../lib/hooks"
 import { useToast } from "../lib/providers/toast"
 import { matchFilter } from "../lib/utils/filter"
 import { FilterModal } from "./filter-modal"
@@ -18,7 +18,7 @@ export function RequestList({
   selectedId,
   onSelectId,
 }: RequestListProps) {
-  const { logs, setLogs } = useLogs(connected)
+  const { logs, setLogs } = useLogList(connected)
   const [filterText, setFilterText] = useState("")
   const [showFilter, setShowFilter] = useState(false)
 
@@ -40,6 +40,10 @@ export function RequestList({
       bottomRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [logs.length])
+
+  useEffect(() => {
+    containerRef.current?.scrollTo(0, 0)
+  }, [filterText])
 
   useEffect(() => {
     if (selectedId !== null && filterText) {

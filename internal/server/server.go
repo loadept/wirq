@@ -61,7 +61,7 @@ func (m *Manager) Stop() error {
 		return errors.New("server is not running")
 	}
 
-	shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := m.server.Shutdown(shutCtx); err != nil {

@@ -2,7 +2,7 @@ import { GetLogDetail } from "@wailsapp/app"
 import type { proxy } from "@wailsapp/models"
 import { useEffect, useState } from "preact/hooks"
 
-export const useLogDetail = (logId: number) => {
+function useLogDetail(logId: number) {
   const [detail, setDetail] = useState<proxy.LogEntry | null>()
   const [error, setError] = useState<string | null>(null)
 
@@ -29,3 +29,5 @@ export const useLogDetail = (logId: number) => {
 
   return { detail, error, setError }
 }
+
+export default useLogDetail

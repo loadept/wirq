@@ -2,7 +2,7 @@ import { ClipboardSetText } from "@wailsapp/runtime"
 import { Copy, Loader } from "lucide-preact"
 import type { ComponentChildren } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { useLogDetail } from "../lib/hooks/logDetail"
+import { useLogDetail } from "../lib/hooks"
 import { useToast } from "../lib/providers/toast"
 import { requestToRaw, responseToRaw } from "../lib/utils/http-format"
 import type { PanelTab, ViewMode } from "../types/index"
@@ -78,7 +78,7 @@ export function DetailPanel({ logId }: DetailPanelProps) {
 
       const ok = await ClipboardSetText(content)
       if (!ok) {
-        toast.addToast("error", "Could not copy to clipboard")
+        toast.addToast("info", "Could not copy to clipboard")
         return
       }
       toast.addToast("success", "Copied to clipboard")

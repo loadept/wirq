@@ -78,23 +78,28 @@ func (m *Manager) Write(cfg *ConfigDTO) error {
 		},
 	}
 
-	file, err := os.OpenFile(m.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		return fmt.Errorf("could not open %s for writing: %w", m.path, err)
-	}
-	defer file.Close()
-
 	confBytes, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("could not serialize config: %w", err)
 	}
 
-	bytesWritten, err := file.Write(confBytes)
+	dir := filepath.Dir(m.path)
+	tmpFile, err := os.CreateTemp(dir, "config.*.tmp")
 	if err != nil {
-		return fmt.Errorf("could not write to %s: %w", m.path, err)
+		return fmt.Errorf("could not create temp file: %w", err)
 	}
-	if bytesWritten != len(confBytes) {
-		return fmt.Errorf("incomplete write to %s: wrote %d of %d bytes", m.path, bytesWritten, len(confBytes))
+	tmpPath := tmpFile.Name()
+
+	if _, err := tmpFile.Write(confBytes); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("could not write temp file: %w", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Rename(tmpPath, m.path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("could not rename temp file: %w", err)
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -85,17 +86,22 @@ func (a *App) SelectCertFile() (string, error) {
 }
 
 func (a *App) StartServer(cfg *config.ConfigDTO) error {
-	if a.proxy == nil {
-		certs, err := tls.LoadX509KeyPair(cfg.CertPath, cfg.CertKeyPath)
-		if err != nil {
-			return fmt.Errorf("could not load certificates: %w", err)
-		}
-
-		a.proxy = proxy.New(a.ctx, &certs)
+	certs, err := tls.LoadX509KeyPair(cfg.CertPath, cfg.CertKeyPath)
+	if err != nil {
+		return fmt.Errorf("could not load certificates: %w", err)
 	}
 
+	if a.proxy == nil {
+		a.proxy = proxy.New(a.ctx, &certs)
+	} else {
+		a.proxy.SetCA(&certs)
+	}
 	addr := fmt.Sprintf("%s:%d", cfg.ServerHost, cfg.ServerPort)
-	return a.server.Start(addr, a.proxy.Handler())
+	if err := a.server.Start(addr, a.proxy.Handler()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *App) StopServer() error {
@@ -103,10 +109,18 @@ func (a *App) StopServer() error {
 }
 
 func (a *App) GetLogDetail(logID int64) *proxy.LogEntry {
+	if a.proxy == nil {
+		return nil
+	}
+
 	return a.proxy.GetLog(logID)
 }
 
 func (a *App) ExportLogs(logIDs []int64, filename string) (string, error) {
+	if a.proxy == nil {
+		return "", errors.New("proxy not started")
+	}
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("could not resolve user home dir: %w", err)
@@ -147,5 +161,9 @@ func (a *App) ExportLogs(logIDs []int64, filename string) (string, error) {
 }
 
 func (a *App) ClearLogs() {
+	if a.proxy == nil {
+		return
+	}
+
 	a.proxy.ClearLogs()
 }

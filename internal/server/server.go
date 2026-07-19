@@ -36,9 +36,11 @@ func (m *Manager) Start(addr string, handler http.Handler) error {
 	}
 
 	m.server = &http.Server{
-		Addr:        addr,
-		Handler:     handler,
-		ReadTimeout: 10 * time.Second,
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	go func(ctx context.Context, listener net.Listener) {

@@ -25,7 +25,29 @@ import (
 const (
 	maxBodySize = 10 * 1024
 	maxLogs     = 1000
+	maxReadSize = 10 * 1024 * 1024
 )
+
+type limitedBuf struct {
+	buf   bytes.Buffer
+	limit int
+}
+
+func (w *limitedBuf) Write(p []byte) (int, error) {
+	if w.limit <= 0 || len(p) == 0 {
+		return len(p), nil
+	}
+	if len(p) > w.limit {
+		p = p[:w.limit]
+	}
+	n, _ := w.buf.Write(p)
+	w.limit -= n
+	return len(p), nil
+}
+
+func (w *limitedBuf) Len() int           { return w.buf.Len() }
+func (w *limitedBuf) Bytes() []byte      { return w.buf.Bytes() }
+func (w *limitedBuf) String() string     { return w.buf.String() }
 
 type Manager struct {
 	appCtx     context.Context
@@ -42,10 +64,10 @@ type Manager struct {
 
 func New(ctx context.Context, ca *tls.Certificate) *Manager {
 	return &Manager{
-		ca:         ca,
-		httpClient: &http.Client{Timeout: 10 * time.Second},
-		certs:      make(map[string]*tls.Certificate),
 		appCtx:     ctx,
+		httpClient: &http.Client{Timeout: 10 * time.Second},
+		ca:         ca,
+		certs:      make(map[string]*tls.Certificate),
 	}
 }
 
@@ -59,7 +81,9 @@ func (m *Manager) Handler() http.Handler {
 				host = r.Host
 			}
 
-			destTLS, err := tls.Dial("tcp", r.Host, &tls.Config{
+			destTLS, err := tls.DialWithDialer(&net.Dialer{
+				Timeout: 10 * time.Second,
+			}, "tcp", r.Host, &tls.Config{
 				ServerName: host,
 			})
 			if err != nil {
@@ -100,7 +124,7 @@ func (m *Manager) Handler() http.Handler {
 			}
 			defer req.Body.Close()
 
-			var bufReq bytes.Buffer
+			bufReq := limitedBuf{limit: maxReadSize}
 			req.Body = io.NopCloser(io.TeeReader(req.Body, &bufReq))
 			if err := req.Write(destTLS); err != nil {
 				return
@@ -112,7 +136,7 @@ func (m *Manager) Handler() http.Handler {
 			}
 			defer res.Body.Close()
 
-			var bufRes bytes.Buffer
+			bufRes := limitedBuf{limit: maxReadSize}
 			res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
 			if err := res.Write(clientTLS); err != nil {
 				return
@@ -155,7 +179,7 @@ func (m *Manager) Handler() http.Handler {
 			}
 			respContentType := res.Header.Get("Content-Type")
 			if bufRes.Len() > 0 {
-				bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes)
+				bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes.buf)
 				switch {
 				case strings.Contains(respContentType, "application/json"):
 					if json.Valid(bodyBytes) {
@@ -203,7 +227,7 @@ func (m *Manager) Handler() http.Handler {
 		}
 		maps.Copy(req.Header, r.Header)
 
-		var bufReq bytes.Buffer
+		bufReq := limitedBuf{limit: maxReadSize}
 		req.Body = io.NopCloser(io.TeeReader(r.Body, &bufReq))
 
 		res, err := m.httpClient.Do(req)
@@ -214,7 +238,7 @@ func (m *Manager) Handler() http.Handler {
 		defer res.Body.Close()
 		maps.Copy(w.Header(), res.Header)
 
-		var bufRes bytes.Buffer
+		bufRes := limitedBuf{limit: maxReadSize}
 		res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
 
 		w.WriteHeader(res.StatusCode)
@@ -257,7 +281,7 @@ func (m *Manager) Handler() http.Handler {
 		}
 		respContentType := res.Header.Get("Content-Type")
 		if bufRes.Len() > 0 {
-			bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes)
+			bodyBytes := m.decompress(res.Header.Get("Content-Encoding"), &bufRes.buf)
 			switch {
 			case strings.Contains(respContentType, "application/json"):
 				if json.Valid(bodyBytes) {
@@ -306,7 +330,7 @@ func (m *Manager) decompress(encoding string, buf *bytes.Buffer) []byte {
 		decoder, err := gzip.NewReader(buf)
 		if err == nil {
 			var bufUncompress bytes.Buffer
-			_, errCopy := io.Copy(&bufUncompress, decoder)
+			_, errCopy := io.Copy(&bufUncompress, io.LimitReader(decoder, maxReadSize))
 			if errCopy == nil {
 				bodyBytes = bufUncompress.Bytes()
 			}
@@ -318,7 +342,7 @@ func (m *Manager) decompress(encoding string, buf *bytes.Buffer) []byte {
 	case strings.Contains(encoding, "br"):
 		decoder := brotli.NewReader(buf)
 		var bufUncompress bytes.Buffer
-		_, errCopy := io.Copy(&bufUncompress, decoder)
+		_, errCopy := io.Copy(&bufUncompress, io.LimitReader(decoder, maxReadSize))
 		if errCopy == nil {
 			bodyBytes = bufUncompress.Bytes()
 		}
@@ -329,7 +353,7 @@ func (m *Manager) decompress(encoding string, buf *bytes.Buffer) []byte {
 		decoder, err := zstd.NewReader(buf)
 		if err == nil {
 			var bufUncompress bytes.Buffer
-			if _, errCopy := io.Copy(&bufUncompress, decoder); errCopy == nil {
+			if _, errCopy := io.Copy(&bufUncompress, io.LimitReader(decoder, maxReadSize)); errCopy == nil {
 				bodyBytes = bufUncompress.Bytes()
 			}
 			decoder.Close()
@@ -363,6 +387,13 @@ func (m *Manager) cachedCert(host string) (*tls.Certificate, error) {
 	}
 	m.certs[host] = cert
 	return cert, nil
+}
+
+func (m *Manager) SetCA(ca *tls.Certificate) {
+	m.certMu.Lock()
+	defer m.certMu.Unlock()
+	m.ca = ca
+	m.certs = make(map[string]*tls.Certificate)
 }
 
 func (m *Manager) GetLog(id int64) *LogEntry {

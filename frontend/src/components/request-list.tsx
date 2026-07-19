@@ -55,9 +55,13 @@ export function RequestList({
   }, [logs, filterText, selectedId, onSelectId])
 
   const handleClear = async () => {
-    await ClearLogs()
-    setLogs([])
-    onSelectId(null)
+    try {
+      await ClearLogs()
+      setLogs([])
+      onSelectId(null)
+    } catch (err) {
+      toast.addToast("error", typeof err === "string" ? err : "failed to clear logs")
+    }
   }
 
   const handleExport = async () => {

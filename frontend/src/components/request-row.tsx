@@ -41,7 +41,7 @@ export function RequestRow({ log, selected, onClick }: RequestRowProps) {
       onClick={onClick}
       class={`flex items-center gap-2 px-3 py-1 w-full text-sm text-left border-b border-border transition-colors ${
         selected
-          ? "bg-foreground/8 border-x-3 border-x-primary"
+          ? "bg-foreground/9 border-x-3 border-x-primary"
           : "hover:bg-muted/50 border-l border-l-transparent"
       } cursor-pointer`}
     >

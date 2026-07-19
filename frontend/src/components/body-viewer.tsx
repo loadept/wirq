@@ -154,7 +154,7 @@ function JsonViewer({ data }: { data: unknown }) {
     <div>
       <div class="text-xs text-muted-foreground mb-1">
         <FileJson class="h-3.5 w-3.5 inline mr-1" />
-        JSON — {formatSize(new Blob([formatted]).size)}
+        JSON — {formatSize(new TextEncoder().encode(formatted).length)}
       </div>
       <pre class="text-sm text-foreground/80 whitespace-pre bg-background border border-border rounded p-3">
         {formatted}
@@ -184,6 +184,7 @@ function BinaryInfoBanner({ contentType }: { contentType: string }) {
     ct.includes("rar") ||
     ct.includes("tar") ||
     ct.includes("gzip") ||
+    ct.includes("gz") ||
     ct.includes("compress")
   ) {
     Icon = FileArchive
@@ -305,7 +306,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
       )
     }
 
-    const preview = BinaryPreview({ data, contentType })
+    const preview = <BinaryPreview data={data} contentType={contentType} />
     if (preview) {
       return (
         <div class="space-y-2">
@@ -412,7 +413,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
           class="w-full min-h-[35vh] border border-border rounded bg-background"
           srcDoc={cleanStr}
           title="HTML Preview"
-          sandbox="allow-same-origin"
+          sandbox=""
         />
       </div>
     )

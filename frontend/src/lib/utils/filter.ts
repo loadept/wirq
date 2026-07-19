@@ -67,7 +67,10 @@ const matchToken = (log: LogSummary, token: string): boolean => {
     case "status":
       return matchField(String(log.statusCode), parsed)
     case "tls":
-      return parsed.value === "true" ? log.tls : !log.tls
+      if (parsed.type === "substring") {
+        return parsed.value === "true" ? log.tls : !log.tls
+      }
+      return matchField(String(log.tls), parsed)
     default:
       return true
   }

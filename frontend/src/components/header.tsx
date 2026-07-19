@@ -31,7 +31,7 @@ export function Header({
           disabled={starting || stopping}
           class={`flex items-center justify-center gap-1 min-w-25 px-2.5 py-1 text-xs rounded transition-all duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-auto enabled:hover:opacity-90 ${
             connected
-              ? " bg-destructive text-destructive-foreground"
+              ? "bg-destructive text-destructive-foreground"
               : "bg-primary text-primary-foreground"
           }`}
         >

@@ -21,11 +21,12 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
     const timer = timers.current.get(id)
     if (timer) {
       clearTimeout(timer)
-      timers.current.delete(id)
     }
-    setTimeout(() => {
+    const newTimer = setTimeout(() => {
+      timers.current.delete(id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 200)
+    timers.current.set(id, newTimer)
   }, [])
 
   const addToast = useCallback(

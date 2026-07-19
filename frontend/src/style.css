@@ -209,7 +209,7 @@
   animation: fadeOut 0.2s ease-in forwards;
 }
 
-button {
+button:focus:not(:focus-visible) {
   outline: none;
 }
 

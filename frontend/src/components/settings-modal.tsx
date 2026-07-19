@@ -49,10 +49,12 @@ export function SettingsModal({
   }
 
   const handleBrowse = async (field: "certPath" | "certKeyPath") => {
-    const path = await onBrowseCert()
-    if (path) {
-      setValue(field, path)
-    }
+    try {
+      const path = await onBrowseCert()
+      if (path) {
+        setValue(field, path)
+      }
+    } catch {}
   }
 
   function handleSubmit(e: TargetedEvent<HTMLFormElement, SubmitEvent>) {
@@ -83,7 +85,7 @@ export function SettingsModal({
   }
 
   return (
-    <Modal title="Settings">
+    <Modal title="Settings" onClose={handleClose}>
       <form onSubmit={handleSubmit}>
         <div class="p-4 space-y-5 overflow-y-auto max-h-[70vh]">
           {hasIssues && (

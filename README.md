@@ -14,6 +14,9 @@
     </p>
 </div>
 
+<!-- TODO: add a screenshot or GIF of the app here -->
+<!-- ![wirq screenshot](docs/screenshot.png) -->
+
 ## Features
 
 - Intercepts HTTP and HTTPS (CONNECT) traffic in real time
@@ -29,6 +32,19 @@
 - [Bun](https://bun.sh)
 - [Wails CLI v2](https://wails.io) — install with `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
 - **Linux**: requires `webkit2gtk-4.1` (build tag `webkit2_41`)
+
+## Quick start
+
+```bash
+git clone https://github.com/loadept/wirq
+cd wirq
+
+# Run in development mode (live reload)
+# On Linux: append -tags webkit2_41
+wails dev
+```
+
+The app window will open. If no certificates are configured, the settings modal appears automatically. Set your CA cert paths (see below) and click **Start**.
 
 ## CA Certificates
 
@@ -53,21 +69,14 @@ Load these two files into wirq's settings:
 | Cert Path | `$(mkcert -CAROOT)/rootCA.pem` |
 | Cert Key Path | `$(mkcert -CAROOT)/rootCA-key.pem` |
 
-## Quick start
+## Development
 
-```bash
-git clone https://github.com/loadept/wirq
-cd wirq
-
-# Install frontend dependencies
-cd frontend && bun install && cd ..
-
-# Run in development mode (live reload)
-# On Linux: append -tags webkit2_41
-wails dev
-```
-
-The app window will open. If no certificates are configured, the settings modal appears automatically. Set your CA cert paths (see above) and click **Start**.
+| Action | Command |
+|---|---|
+| Dev mode (live reload) | `wails dev` (Linux: `wails dev -tags webkit2_41`) |
+| Lint / format frontend | `bun run --bun biome check --write frontend/src/` |
+| Frontend standalone (Vite) | `cd frontend && bun run dev` |
+| Add frontend dependency | `cd frontend && bun add <pkg>` |
 
 ## Build
 
@@ -98,12 +107,3 @@ Default values:
   "general": { "appearance": "dark" }
 }
 ```
-
-## Development commands
-
-| Action | Command |
-|---|---|
-| Dev mode (live reload) | `wails dev` (Linux: `wails dev -tags webkit2_41`) |
-| Production build | `wails build` (Linux: `wails build -tags webkit2_41`) |
-| Frontend lint / format | `cd frontend && bun run --bun biome check --write src/` |
-| Frontend standalone | `cd frontend && bun run dev` |

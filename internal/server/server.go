@@ -30,7 +30,7 @@ func (m *Manager) Start(addr string, handler http.Handler) error {
 		return errors.New("server is already running")
 	}
 
-	ln, err := net.Listen("tcp", addr)
+	ln, err := (&net.ListenConfig{}).Listen(m.ctx, "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("could not bind to %s: %w", addr, err)
 	}

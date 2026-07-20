@@ -146,7 +146,8 @@ func (a *App) ExportLogs(logIDs []int64, filename string) (string, error) {
 		return "", err
 	}
 
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	//nolint:gosec // config path from user settings
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return "", err
 	}

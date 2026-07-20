@@ -45,9 +45,9 @@ func (w *limitedBuf) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func (w *limitedBuf) Len() int           { return w.buf.Len() }
-func (w *limitedBuf) Bytes() []byte      { return w.buf.Bytes() }
-func (w *limitedBuf) String() string     { return w.buf.String() }
+func (w *limitedBuf) Len() int       { return w.buf.Len() }
+func (w *limitedBuf) Bytes() []byte  { return w.buf.Bytes() }
+func (w *limitedBuf) String() string { return w.buf.String() }
 
 type Manager struct {
 	appCtx     context.Context
@@ -74,6 +74,7 @@ func New(ctx context.Context, ca *tls.Certificate) *Manager {
 func (m *Manager) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := m.counter.Add(1)
+		ctx := r.Context()
 
 		if r.Method == http.MethodConnect {
 			host, _, err := net.SplitHostPort(r.Host)
@@ -81,11 +82,11 @@ func (m *Manager) Handler() http.Handler {
 				host = r.Host
 			}
 
-			destTLS, err := tls.DialWithDialer(&net.Dialer{
-				Timeout: 10 * time.Second,
-			}, "tcp", r.Host, &tls.Config{
-				ServerName: host,
-			})
+			dialer := &tls.Dialer{
+				NetDialer: &net.Dialer{Timeout: 10 * time.Second},
+				Config:    &tls.Config{ServerName: host},
+			}
+			destTLS, err := dialer.DialContext(ctx, "tcp", r.Host)
 			if err != nil {
 				http.Error(w, "unable to connect to destination", http.StatusServiceUnavailable)
 				return
@@ -114,7 +115,7 @@ func (m *Manager) Handler() http.Handler {
 			})
 			defer clientTLS.Close()
 
-			if err := clientTLS.Handshake(); err != nil {
+			if err := clientTLS.HandshakeContext(ctx); err != nil {
 				return
 			}
 
@@ -220,7 +221,8 @@ func (m *Manager) Handler() http.Handler {
 			runtime.EventsEmit(m.appCtx, "proxy:log", summary)
 			return
 		}
-		req, err := http.NewRequest(r.Method, r.URL.String(), r.Body)
+		//nolint:gosec // MITM proxy — SSRF is expected
+		req, err := http.NewRequestWithContext(ctx, r.Method, r.URL.String(), r.Body)
 		if err != nil {
 			http.Error(w, "error creating request", http.StatusBadGateway)
 			return
@@ -230,6 +232,7 @@ func (m *Manager) Handler() http.Handler {
 		bufReq := limitedBuf{limit: maxReadSize}
 		req.Body = io.NopCloser(io.TeeReader(r.Body, &bufReq))
 
+		//nolint:gosec // MITM proxy — SSRF is expected
 		res, err := m.httpClient.Do(req)
 		if err != nil {
 			http.Error(w, "proxy error", http.StatusBadGateway)

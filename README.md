@@ -132,7 +132,7 @@ You'll find two files there:
 
 ### Step 4: Start the proxy
 
-Click the **Start** button in the top-right corner. The status indicator will turn green when the proxy is running.
+Click the **Start** button in the top. The status indicator will turn green when the proxy is running.
 
 ![Connected state](docs/screenshots/connected.png)
 
@@ -220,7 +220,7 @@ Once configured, any request going through the proxy appears in wirq in real tim
 3. Use the **filter** to search by method, host, URL, status code, or regex (e.g. `method:POST status:200`).
 4. Right-click entries to **Export** selected logs as JSON.
 
-<!-- ![Intercepted traffic](docs/screenshots/traffic.png) -->
+![Intercepted traffic](docs/screenshots/traffic.png)
 
 ## CA Certificates
 

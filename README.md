@@ -10,12 +10,12 @@
     </p>
     <p>
         <a href="https://wirq.loadept.com">🌐 Homepage</a> &nbsp;|&nbsp;
-        <a href="https://github.com/loadept/wirq">💻 GitHub</a>
+        <a href="https://github.com/loadept/wirq">💻 GitHub</a> &nbsp;|&nbsp;
+        <a href="LICENSE">📄 AGPL-3.0</a>
     </p>
 </div>
 
-<!-- TODO: add a screenshot or GIF of the app here -->
-<!-- ![wirq screenshot](docs/screenshot.png) -->
+![wirq](docs/screenshots/main.png)
 
 ## Features
 
@@ -44,25 +44,191 @@ cd wirq
 wails dev
 ```
 
-The app window will open. If no certificates are configured, the settings modal appears automatically. Set your CA cert paths (see below) and click **Start**.
+The app window will open. If no certificates are configured, the settings modal appears automatically. Follow the [Usage Guide](#usage-guide) below to get started.
+
+## Usage Guide
+
+### Step 1: Install mkcert
+
+mkcert creates a local CA trusted by your system. Install it for your platform:
+
+<details>
+<summary><b>Windows</b></summary>
+
+```bash
+# Using WinGet (Windows 10/11)
+winget install mkcert
+
+# Or using Chocolatey
+choco install mkcert
+```
+
+</details>
+
+<details>
+<summary><b>macOS</b></summary>
+
+```bash
+# Using Homebrew
+brew install mkcert
+```
+
+</details>
+
+<details>
+<summary><b>Linux (Debian/Ubuntu)</b></summary>
+
+```bash
+# Install dependencies
+sudo apt install libnss3-tools
+
+# Using the install script
+curl -JL https://dl.filippo.io/mkcert/latest?for=linux/amd64 -o mkcert
+chmod +x mkcert
+sudo mv mkcert /usr/local/bin/
+
+# Or via your package manager (if available)
+# brew, apt, pacman, etc.
+```
+
+</details>
+
+### Step 2: Generate CA certificates
+
+Run the following commands to create a local CA and find the generated files:
+
+```bash
+# Create a local CA trusted by your system
+mkcert -install
+
+# Find where the PEM files were saved
+mkcert -CAROOT
+```
+
+The output tells you where your CA files are:
+
+| Platform | Path |
+|---|---|
+| Windows | `%LOCALAPPDATA%\mkcert` |
+| macOS | `~/Library/Application Support/mkcert` |
+| Linux | `~/.local/share/mkcert` |
+
+You'll find two files there:
+
+| File | Description |
+|---|---|
+| `rootCA.pem` | CA certificate — this is what your OS/browser trusts |
+| `rootCA-key.pem` | CA private key — used by wirq to sign intercepted certs |
+
+### Step 3: Configure wirq
+
+1. Open wirq. The **Settings** modal appears automatically on first run.
+2. Click the folder icon next to **CA Certificate** and select `rootCA.pem`.
+3. Click the folder icon next to **CA Key** and select `rootCA-key.pem`.
+4. Optionally adjust the **Host** and **Port** (default: `127.0.0.1:3100`).
+5. Click **Save**.
+
+![Settings modal](docs/screenshots/settings.png)
+
+### Step 4: Start the proxy
+
+Click the **Start** button in the top-right corner. The status indicator will turn green when the proxy is running.
+
+![Connected state](docs/screenshots/connected.png)
+
+### Step 5: Configure your browser or system
+
+Point your browser or system to use wirq as an HTTP proxy:
+
+<details>
+<summary><b>System-wide (Windows)</b></summary>
+
+1. Open **Settings** → **Network & Internet** → **Proxy**
+2. Under **Manual proxy setup**, click **Edit**
+3. Enable **Use a proxy server**
+4. Set **Address** to `127.0.0.1` and **Port** to `3100`
+5. Click **Save**
+
+</details>
+
+<details>
+<summary><b>System-wide (macOS)</b></summary>
+
+1. Open **System Settings** → **Network** → select your connection
+2. Click **Details** → **Proxies**
+3. Enable **Web Proxy (HTTP)** and **Secure Web Proxy (HTTPS)**
+4. Set both to `127.0.0.1:3100`
+5. Click **OK**
+
+</details>
+
+<details>
+<summary><b>System-wide (Linux — GNOME)</b></summary>
+
+```bash
+# Set proxy via gsettings
+gsettings set org.gnome.system.proxy mode 'manual'
+gsettings set org.gnome.system.proxy.http host '127.0.0.1'
+gsettings set org.gnome.system.proxy.http port 3100
+gsettings set org.gnome.system.proxy.https host '127.0.0.1'
+gsettings set org.gnome.system.proxy.https port 3100
+```
+
+</details>
+
+<details>
+<summary><b>Firefox</b></summary>
+
+1. Open **Settings** → scroll to **Network Settings**
+2. Select **Manual proxy configuration**
+3. Set **HTTP Proxy** to `127.0.0.1`, **Port** `3100`
+4. Check **Also use this proxy for HTTPS**
+5. Click **OK**
+
+> **Note:** Firefox uses its own certificate store. To intercept HTTPS in Firefox, import `rootCA.pem` into Firefox's **Certificate Authorities** (Settings → Privacy & Security → Certificates → View Certificates → Authorities → Import).
+
+</details>
+
+<details>
+<summary><b>Chrome / Edge / Chromium</b></summary>
+
+These browsers use the OS certificate store, so if you ran `mkcert -install`, they'll trust intercepted HTTPS out of the box. Just set the proxy address to `127.0.0.1:3100`.
+
+</details>
+
+<details>
+<summary><b>curl</b></summary>
+
+```bash
+# Use wirq as proxy for a single request
+curl -x http://127.0.0.1:3100 https://example.com
+
+# Or set it for the session
+export http_proxy=http://127.0.0.1:3100
+export https_proxy=http://127.0.0.1:3100
+curl https://example.com
+```
+
+</details>
+
+### Step 6: Inspect traffic
+
+Once configured, any request going through the proxy appears in wirq in real time:
+
+1. Click any entry in the **request list** to see full details.
+2. Switch between **Request** and **Response** tabs.
+3. Use the **filter** to search by method, host, URL, status code, or regex (e.g. `method:POST status:200`).
+4. Right-click entries to **Export** selected logs as JSON.
+
+<!-- ![Intercepted traffic](docs/screenshots/traffic.png) -->
 
 ## CA Certificates
 
 wirq is a MITM proxy and needs a **CA certificate pair** (PEM) to dynamically generate TLS certificates for intercepted hosts. It does **not** generate its own CA — you provide one.
 
-The easiest way is with [mkcert](https://github.com/FiloSottile/mkcert):
+The recommended way is with [mkcert](https://github.com/FiloSottile/mkcert) (see [Step 1](#step-1-install-mkcert) above).
 
-```bash
-# Install mkcert and create a local CA trusted by your system
-mkcert -install
-
-# Locate the generated PEM files
-mkcert -CAROOT
-# → ~/.local/share/mkcert  (Linux)
-# → ~/Library/Application Support/mkcert  (macOS)
-```
-
-Load these two files into wirq's settings:
+Once you have the files, load them into wirq's settings:
 
 | Field | Value |
 |---|---|
@@ -107,3 +273,7 @@ Default values:
   "general": { "appearance": "dark" }
 }
 ```
+
+## License
+
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).

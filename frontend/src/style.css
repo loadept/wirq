@@ -54,6 +54,8 @@
   --purple-foreground: #ffffff;
   --cyan: #56b6c2;
   --cyan-foreground: #ffffff;
+  --amber: #e5c07b;
+  --amber-foreground: #ffffff;
   --chart-1: #d19a66;
   --chart-2: #e06c75;
   --chart-3: #c9865c;
@@ -98,6 +100,8 @@
   --purple-foreground: #1e2127;
   --cyan: #56b6c2;
   --cyan-foreground: #1e2127;
+  --amber: #e5c07b;
+  --amber-foreground: #1e2127;
   --chart-1: #d19a66;
   --chart-2: #e06c75;
   --chart-3: #c9865c;
@@ -141,6 +145,8 @@
   --color-purple-foreground: var(--purple-foreground);
   --color-cyan: var(--cyan);
   --color-cyan-foreground: var(--cyan-foreground);
+  --color-amber: var(--amber);
+  --color-amber-foreground: var(--amber-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

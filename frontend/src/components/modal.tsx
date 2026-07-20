@@ -41,7 +41,7 @@ export const Modal = ({
         )}
       >
         <div class="px-4 py-3 border-b border-border">
-          <h2 id={titleId} class="text-sm text-foreground tracking-wider">
+          <h2 id={titleId} class="text-xs text-foreground tracking-wider">
             {title}
           </h2>
         </div>

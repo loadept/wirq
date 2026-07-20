@@ -252,7 +252,7 @@ export function SettingsModal({
       {confirm && (
         <Modal title="Unsaved Changes" class="w-80">
           <div class="p-4 space-y-3">
-            <p class="text-sm text-foreground/80">
+            <p class="text-xs text-foreground/80">
               You have unsaved changes. Discard changes?
             </p>
             <div class="flex justify-end gap-2">

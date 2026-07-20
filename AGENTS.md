@@ -115,3 +115,249 @@ frontend/src/lib/
 - Modal closing: only via Escape key or explicit close button. No backdrop click — user hates accidental closes.
 - Package manager: `bun` (not npm/npx/pnpm/yarn); use `bunx` for running binaries.
 - Config on-disk format uses nested objects (`server.host`, `certAuthority.certPath`) but `ConfigDTO` is flat — `config.Manager` handles the translation.
+
+## Visual system
+
+### Color palette (Atom One)
+
+Six custom accent colors, all from the Atom One theme. Values are **identical** in light and dark modes — only backgrounds, foregrounds, and borders change between themes.
+
+| Name | Hex | Token | Tailwind class |
+|---|---|---|---|
+| Orange | `#d19a66` | `--primary` | `text-primary`, `bg-primary` |
+| Red | `#e06c75` | `--destructive`, `--accent` | `text-destructive`, `bg-destructive` |
+| Green | `#98c379` | `--green` | `text-green`, `bg-green` |
+| Blue | `#61afef` | `--blue` | `text-blue`, `bg-blue` |
+| Purple | `#c678dd` | `--purple` | `text-purple`, `bg-purple` |
+| Cyan | `#56b6c2` | `--cyan` | `text-cyan`, `bg-cyan` |
+| Amber | `#e5c07b` | `--amber` | `text-amber`, `bg-amber` |
+
+#### Grays (differ between light and dark)
+
+| Token | Light | Dark | Tailwind |
+|---|---|---|---|
+| `--background` | `#f8f7f4` | `#1a1a1a` | `bg-background` |
+| `--foreground` | `#2c2c2c` | `#abb2bf` | `text-foreground` |
+| `--card` | `#ffffff` | `#282c34` | `bg-card` |
+| `--muted` | `#e8e8e8` | `#3e4451` | `bg-muted` |
+| `--muted-foreground` | `#666666` | `#666666` | `text-muted-foreground` |
+| `--border` | `#d4d4d4` | `#3e4451` | `border-border` |
+| `--input` | `#ffffff` | `#282c34` | `bg-input` |
+| `--secondary` | `#e8e8e8` | `#3e4451` | `bg-secondary` |
+| `--ring` | `#d19a66` | `#d19a66` | `ring-ring` |
+
+Dark-mode foreground overrides for colored elements: `--primary-foreground`, `--green-foreground`, etc. all use `#1e2127` (dark text on bright colors). Light mode uses `#ffffff`.
+
+#### HTTP method colors
+
+Defined in `request-row.tsx` → `METHOD_COLORS`:
+
+| Method | Color class | Hex |
+|---|---|---|
+| GET | `text-green` | `#98c379` |
+| QUERY | `text-amber` | `#e5c07b` |
+| POST | `text-primary` | `#d19a66` |
+| PUT | `text-blue` | `#61afef` |
+| PATCH | `text-purple` | `#c678dd` |
+| DELETE | `text-destructive` | `#e06c75` |
+| HEAD | `text-cyan` | `#56b6c2` |
+| OPTIONS | `text-muted-foreground` | `#666666` |
+| Unknown | `text-foreground` | (fallback) |
+
+#### HTTP status code colors
+
+Defined in `request-row.tsx` → `STATUS_COLORS` (first digit):
+
+| Range | Color | Hex |
+|---|---|---|
+| 2xx | `text-green` | `#98c379` |
+| 3xx | `text-blue` | `#61afef` |
+| 4xx | `text-primary` | `#d19a66` |
+| 5xx | `text-destructive` | `#e06c75` |
+| Other | `text-foreground` | (fallback) |
+
+#### Toast colors
+
+| Type | Classes |
+|---|---|
+| Error | `bg-destructive text-destructive-foreground` |
+| Success | `bg-green text-green-foreground` |
+| Info | `bg-muted text-foreground` |
+
+### Typography
+
+- **Font family**: `geist-mono` (monospace, variable axis 100–900). Applied on `:root`. Entire app is monospaced.
+- **Declared but unused**: `firacode` (static 400, in CSS but not referenced by any component).
+- **Base size**: `17px` on `:root` (`font-size: 17px`).
+- **Font weights**: Only `400` (normal). No `font-bold`/`font-semibold` anywhere in the app.
+- **Two text sizes, strict convention**:
+  - `text-xs` (12px) — **UI chrome**: labels, titles, tab buttons, status text, buttons, toasts, errors, settings labels, filter chips, pretty-view labels, body-viewer banners, modal titles, confirm dialogs
+  - `text-sm` (14px) — **data content**: request row path, request/response bodies, raw views, pretty-view values, settings inputs, filter input
+- **Letter spacing**: `tracking-wider` (0.05em) on all labels, section headers, modal titles, tab buttons, pretty-view label columns, settings form labels.
+- **No decorative typography**: no italic, no bold, no uppercase transforms.
+
+### Icon system
+
+- **Library**: `lucide-preact`
+- **Two sizes, strict convention** (plus one exception):
+  - `h-3.5 w-3.5` (14px) — icon **with text** beside it: Lock (request row), Search (filter modal), Eye/File variants/Download (body-viewer buttons), Loader/Square/Play (start/stop button)
+  - `h-4 w-4` (16px) — **standalone icon** (no adjacent text): Settings (header), Search/Download/BrushCleaning (toolbar), FolderSearch (browse cert), Copy (detail panel)
+  - `h-2.5 w-2.5` (10px) — **exception**: connection status dot only
+- **Icon color**: inherited from parent text color, or explicit `text-muted-foreground` (Lock, Search-in-filter), `text-primary` (Search-when-filtered), `text-foreground` (toolbar buttons).
+- **No decorative icons**: every icon has a functional purpose.
+
+### Spacing and sizing
+
+#### Grid system
+
+Most padding/gap values are multiples of 3–4px:
+
+| Tailwind | Value | Common usage |
+|---|---|---|
+| `p-1`, `gap-1`, `py-1` | 4px | Icon buttons, row vertical padding |
+| `p-2`, `gap-2` | 8px | Button groups, chip spacing |
+| `p-3`, `gap-3`, `px-3` | 12px | Main horizontal padding, grid gaps, detail content, modal body |
+| `p-4`, `px-4`, `py-4` | 16px | Modal padding, settings form padding/footer |
+| `gap-1.5` | 6px | Icon-label gaps, chip inner spacing |
+| `gap-4` | 16px | Pretty-view key-value grid |
+
+#### Fixed heights
+
+| Element | Class | Value |
+|---|---|---|
+| Header | `h-11` | 44px |
+| Resize handle | `h-1.5` | 6px |
+| No-filter placeholder | `h-32` | 128px |
+
+#### Fixed/max widths
+
+| Element | Class | Value |
+|---|---|---|
+| Empty-state logo | `w-40` | 160px |
+| Host column (request row) | `max-w-45` | 180px |
+| Modal card | `max-w-xl` | 576px |
+| Confirm dialog | `w-80` | 320px |
+| Toast messages | `max-w-xs` | 320px |
+| Start/stop button | `min-w-25` | 100px |
+| Port input | `w-50` | 200px |
+| Binary preview images | `max-w-[35vh]` | viewport-relative |
+
+#### Opacity patterns
+
+| Opacity | Usage |
+|---|---|
+| `bg-foreground/9` (~3.5%) | Selected request row background |
+| `hover:bg-muted/50` (~20%) | Request row hover |
+| `hover:bg-primary/50` | Resize handle hover |
+| `bg-primary/10` (~4%) | Filter chips background |
+| `bg-destructive/10` | Truncation warning background |
+| `hover:opacity-80` | Button hover state |
+| `text-foreground/80` | Secondary text (raw view, header values) |
+| `text-foreground/70` | Path text in request row |
+| `text-foreground/90` | Pretty-view values, chip values |
+| `disabled:opacity-40` | Disabled start/stop button |
+| `bg-black/40` | Modal backdrop overlay |
+| `even:bg-muted/30` (~12%) | Alternating header rows |
+| `border-destructive/30` | Truncation warning border |
+| `opacity-50` | Empty-state logo |
+
+### Borders and radius
+
+#### Radius
+
+`--radius: 0`. All Tailwind radius utilities compute to 0 or near-0:
+- `rounded` → 0px (no-op). Used on: buttons, inputs, modals, toasts, chips, pre blocks.
+- `rounded-full` → true circle. Used **only** on dark mode toggle knob and track.
+- `rounded-sm`/`rounded-md`/`rounded-lg` → 0px (computed negatives, clamped by browser).
+
+The app is **square-cornered by design**.
+
+#### Border patterns
+
+| Pattern | Where |
+|---|---|
+| `border-b border-border` | Header bottom, toolbar bottom, request row bottom, tab bar bottom, settings footer top |
+| `border border-border` | Modal card, inputs, pre/code blocks, header tables, action buttons, binary previews, embeds |
+| `border-t border-border` | Detail panel top, settings modal footer |
+| `border-x-3 border-x-primary` | Selected request row (left + right accent) |
+| `border-l border-l-transparent` | Default request row (transparent left border) |
+| `border-b-2 border-b-primary` | Active tab underline |
+| `border-b-2 border-b-transparent` | Inactive tab underline |
+| `border border-destructive/30` | Truncation warning banner |
+
+### Animations and transitions
+
+#### Keyframe animations (`style.css`)
+
+| Animation | Effect | Duration | Easing |
+|---|---|---|---|
+| `fadeIn` | `opacity: 0→1`, `translateY(-10px→0)` | 0.2s | ease-out |
+| `fadeOut` | `opacity: 1→0`, `translateY(0→-10px)` | 0.2s | ease-in (forwards) |
+
+Applied via `.animate-fade-in` and `.animate-fade-out` classes.
+
+#### Tailwind animation utilities
+
+| Class | Element |
+|---|---|
+| `animate-fade-in` | Modal backdrop, toast entry |
+| `animate-fade-out` | toast exit (forwards fill) |
+| `animate-spin` | Loader icon (start/stop button, detail panel loading) |
+| `animate-pulse` | Connection status dot (connected), "Waiting for requests..." text |
+
+#### Transitions
+
+| Pattern | Elements |
+|---|---|
+| `transition-colors` | Settings button, filter/export/clear buttons, browse cert buttons, cancel buttons, copy button, tab buttons, resize handle, toggle track |
+| `transition-all duration-100` | Start/stop button |
+| `transition-transform` | Dark mode toggle knob |
+| `transition-opacity` | Save button (enabled/disabled) |
+
+#### Scroll behavior
+
+- `scrollIntoView({ behavior: "smooth" })` — auto-scroll to bottom in request list
+- `scrollTo(0, 0)` — reset scroll on filter change and on log detail load/tab/view change
+
+### Component visual patterns
+
+#### Header (`header.tsx`)
+- 3-column grid, `h-11` (44px), `bg-card`, bottom border
+- Center column: start/stop button (`min-w-25`, `bg-primary`/`bg-destructive`, `rounded`)
+- Right column: settings gear icon button
+
+#### Request row (`request-row.tsx`)
+- Flex row: lock icon | method (colored, `w-14`) | status code (colored, `w-10`, right-aligned, `tabular-nums`) | host (`max-w-45`, `text-muted-foreground`) | path (`text-foreground/70`)
+- Selected: `bg-foreground/9`, `border-x-3 border-x-primary`
+- Default: `hover:bg-muted/50`, `border-l border-l-transparent`
+
+#### Detail panel (`detail-panel.tsx`)
+- Resizable via drag handle (`h-1.5`, `bg-border`, hover/active → `bg-primary`)
+- Tab bar: active tab `text-primary border-b-2 border-b-primary`, inactive `text-muted-foreground border-b-2 border-b-transparent`
+- Content area: `flex-1 overflow-auto p-3`
+
+#### Modal (`modal.tsx`)
+- Fixed overlay: `bg-black/40`, fade-in animation
+- Card: `max-w-xl bg-card border border-border rounded shadow-lg`
+- Closing: **only** Escape key or explicit close button. **No backdrop click.**
+
+#### Form inputs
+- Base: `bg-background border-border rounded text-sm`
+- Focus: `focus:outline-none focus:ring-1 focus:ring-ring`
+- Error: `data-[error=true]:border-destructive`
+- Browse buttons: `p-2 text-foreground hover:text-accent`
+
+#### Toast (`toast.ts`)
+- Portal to `document.body`, `fixed top-26 right-4`
+- Auto-dismiss after 4 seconds
+- Max width `max-w-xs`, `shadow-lg`
+- Entry: `animate-fade-in`, exit: `animate-fade-out`
+
+#### Filter chips (`filter-modal.tsx`)
+- `inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded`
+- Key in `text-primary`, value in `text-foreground/90`
+
+#### Dark mode toggle (`settings-modal.tsx`)
+- Track: `w-9 h-5 bg-muted rounded-full peer-checked:bg-primary`
+- Knob: `w-4 h-4 bg-background rounded-full peer-checked:translate-x-4`
+- Only element in the app with visual rounding (`rounded-full`)

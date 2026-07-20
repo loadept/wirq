@@ -9,6 +9,7 @@ interface RequestRowProps {
 
 const METHOD_COLORS: Record<string, string> = {
   GET: "text-green",
+  QUERY: "text-amber",
   POST: "text-primary",
   PUT: "text-blue",
   PATCH: "text-purple",

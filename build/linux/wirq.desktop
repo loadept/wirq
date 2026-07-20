@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=wirq
+Comment=A local MITM proxy for inspecting HTTP/HTTPS traffic.
+Exec=wirq
+Icon=wirq
+Terminal=false
+Type=Application
+Categories=Development;Network;
+StartupNotify=false
+StartupWMClass=wirq

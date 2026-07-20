@@ -6,7 +6,7 @@
     />
     <h1>wirq</h1>
     <p>
-        A lightweight, fast, open-source MITM HTTP proxy for developers
+        A local MITM proxy for inspecting HTTP/HTTPS traffic.
     </p>
     <p>
         <a href="https://wirq.loadept.com">🌐 Homepage</a> &nbsp;|&nbsp;

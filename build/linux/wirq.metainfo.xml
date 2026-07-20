@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.loadept.wirq</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <name>wirq</name>
+  <summary>A local MITM proxy for inspecting HTTP/HTTPS traffic.</summary>
+  <description>
+    <p>wirq is a MITM proxy build with Wails and Go for inspact HTTP/HTTPS traffic.</p>
+  </description>
+  <launchable type="desktop-id">wirq.desktop</launchable>
+  <url type="homepage">https://github.com/loadept/wirq</url>
+  <developer id="loadept">
+    <name>loadept</name>
+  </developer>
+</component>

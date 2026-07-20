@@ -1,18 +1,22 @@
 <div align="center">
-    <img
-        src="https://assets.loadept.com/wirq_logo.svg"
-        alt="wirq"
-        width="128"
-    />
-    <h1>wirq</h1>
-    <p>
-        A local MITM proxy for inspecting HTTP/HTTPS traffic.
-    </p>
-    <p>
-        <a href="https://wirq.loadept.com">🌐 Homepage</a> &nbsp;|&nbsp;
-        <a href="https://github.com/loadept/wirq">💻 GitHub</a> &nbsp;|&nbsp;
-        <a href="LICENSE">📄 AGPL-3.0</a>
-    </p>
+
+<img
+    src="https://assets.loadept.com/wirq_logo.svg"
+    alt="wirq"
+    width="128"
+/>
+<h1>wirq</h1>
+<p>
+    A local MITM proxy for inspecting HTTP/HTTPS traffic.
+</p>
+<p>
+    <a href="https://wirq.loadept.com">🌐 Homepage</a> &nbsp;|&nbsp;
+    <a href="https://github.com/loadept/wirq">💻 GitHub</a> &nbsp;|&nbsp;
+    <a href="LICENSE">📄 AGPL-3.0</a>
+</p>
+
+[![ci](https://github.com/loadept/wirq/actions/workflows/ci.yml/badge.svg)](https://github.com/loadept/wirq/actions/workflows/ci.yml)
+
 </div>
 
 ![wirq](docs/screenshots/main.png)

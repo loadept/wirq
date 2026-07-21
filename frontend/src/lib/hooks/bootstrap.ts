@@ -31,7 +31,7 @@ function useBootstrap() {
 
         setConfig(cfg)
         if (cfg.appearance) {
-          setTheme(cfg.appearance as Theme)
+          setTheme(cfg.appearance === "light" ? "light" : "dark")
         }
         if (!cfg.certPath.trim() || !cfg.certKeyPath.trim()) {
           setSettingsOpen(true)
@@ -58,14 +58,14 @@ function useBootstrap() {
     try {
       await SaveConfig(cfg)
       setConfig(cfg)
-      setTheme(cfg.appearance as Theme)
+      setTheme(cfg.appearance === "light" ? "light" : "dark")
     } catch (err) {
       throw typeof err === "string" ? err : "unknown error"
     }
   }
 
   const closeSettings = () => {
-    setTheme(config.appearance as Theme)
+    setTheme(config.appearance === "light" ? "light" : "dark")
     setSettingsOpen(false)
   }
 

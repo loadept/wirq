@@ -245,7 +245,7 @@ func (m *Manager) Handler() http.Handler {
 		res.Body = io.NopCloser(io.TeeReader(res.Body, &bufRes))
 
 		w.WriteHeader(res.StatusCode)
-		io.Copy(w, res.Body)
+		_, _ = io.Copy(w, res.Body)
 
 		reqLog := RequestLog{
 			Host:    req.Host,
@@ -373,12 +373,13 @@ func (m *Manager) decompress(encoding string, buf *bytes.Buffer) []byte {
 func (m *Manager) cachedCert(host string) (*tls.Certificate, error) {
 	m.certMu.RLock()
 	cert, ok := m.certs[host]
+	ca := m.ca
 	m.certMu.RUnlock()
 	if ok {
 		return cert, nil
 	}
 
-	cert, err := GenerateCert(m.ca, host)
+	cert, err := GenerateCert(ca, host)
 	if err != nil {
 		return nil, err
 	}
@@ -441,6 +442,6 @@ func (m *Manager) appendLog(log *LogEntry) {
 
 	m.logs = append(m.logs, log)
 	if len(m.logs) > maxLogs {
-		m.logs = m.logs[len(m.logs)-maxLogs:]
+		m.logs = append([]*LogEntry(nil), m.logs[len(m.logs)-maxLogs:]...)
 	}
 }

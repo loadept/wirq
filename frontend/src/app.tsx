@@ -52,7 +52,7 @@ export const App = () => {
       setSettingsOpen(false)
       toast.addToast("success", "Settings saved")
     } catch (err) {
-      toast.addToast("error", err as string)
+      toast.addToast("error", typeof err === "string" ? err : String(err))
     }
   }
 

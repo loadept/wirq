@@ -10,7 +10,7 @@ import { RequestRow } from "./request-row"
 interface RequestListProps {
   connected: boolean
   selectedId: number | null
-  onSelectId: (index: number | null) => void
+  onSelectId: (id: number | null) => void
 }
 
 export function RequestList({
@@ -60,7 +60,10 @@ export function RequestList({
       setLogs([])
       onSelectId(null)
     } catch (err) {
-      toast.addToast("error", typeof err === "string" ? err : "failed to clear logs")
+      toast.addToast(
+        "error",
+        typeof err === "string" ? err : "failed to clear logs",
+      )
     }
   }
 

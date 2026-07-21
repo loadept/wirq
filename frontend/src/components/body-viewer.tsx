@@ -273,11 +273,7 @@ export function BodyViewer({ body, isBase64, contentType }: BodyViewerProps) {
   }, [body])
 
   if (body === null || body === undefined || body === "") {
-    return (
-      <div class="text-muted-foreground italic px-1 py-2 text-xs">
-        (no body)
-      </div>
-    )
+    return <div class="text-muted-foreground px-1 py-2 text-xs">(no body)</div>
   }
 
   if (isBase64) {

@@ -244,6 +244,7 @@ Once you have the files, load them into wirq's settings:
 | Action | Command |
 |---|---|
 | Dev mode (live reload) | `wails dev` (Linux: `wails dev -tags webkit2_41`) |
+| Go tests | `gotestsum --format testname -- -race ./internal/...` |
 | Lint / format frontend | `bun run --bun biome check --write frontend/src/` |
 | Frontend standalone (Vite) | `cd frontend && bun run dev` |
 | Add frontend dependency | `cd frontend && bun add <pkg>` |

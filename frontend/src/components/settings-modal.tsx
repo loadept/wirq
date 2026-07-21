@@ -20,7 +20,7 @@ export function SettingsModal({
   onToggleTheme,
   onBrowseCert,
 }: SettingsModalProps) {
-  const [config, setConfig] = useState<config.ConfigDTO>(initial)
+  const [cfg, setCfg] = useState<config.ConfigDTO>(initial)
   const [confirm, setConfirm] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [issues, setIssues] = useState<Record<string, string>>({})
@@ -37,7 +37,7 @@ export function SettingsModal({
 
   const setValue = (field: keyof config.ConfigDTO, value: string) => {
     setDirty(true)
-    setConfig((prev) => ({
+    setCfg((prev) => ({
       ...prev,
       [field]: field === "serverPort" ? Number(value) : value,
     }))
@@ -60,7 +60,7 @@ export function SettingsModal({
   function handleSubmit(e: TargetedEvent<HTMLFormElement, SubmitEvent>) {
     e.preventDefault()
     const form = e.currentTarget
-    const result = SettingsSchema.safeParse(config)
+    const result = SettingsSchema.safeParse(cfg)
 
     form.querySelectorAll("[data-error]").forEach((el) => {
       el.removeAttribute("data-error")
@@ -111,7 +111,7 @@ export function SettingsModal({
                   id="certPath"
                   name="certPath"
                   type="text"
-                  value={config.certPath}
+                  value={cfg.certPath}
                   onInput={(e) => setValue("certPath", e.currentTarget.value)}
                   class="flex-1 px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
                   placeholder="/path/to/rootCA.pem"
@@ -139,7 +139,7 @@ export function SettingsModal({
                   id="certKeyPath"
                   name="certKeyPath"
                   type="text"
-                  value={config.certKeyPath}
+                  value={cfg.certKeyPath}
                   onInput={(e) =>
                     setValue("certKeyPath", e.currentTarget.value)
                   }
@@ -173,7 +173,7 @@ export function SettingsModal({
                   id="serverHost"
                   name="serverHost"
                   type="text"
-                  value={config.serverHost}
+                  value={cfg.serverHost}
                   onInput={(e) => setValue("serverHost", e.currentTarget.value)}
                   class="mt-1 w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
                   placeholder="0.0.0.0"
@@ -191,7 +191,7 @@ export function SettingsModal({
                   id="serverPort"
                   name="serverPort"
                   type="number"
-                  value={config.serverPort}
+                  value={cfg.serverPort}
                   onInput={(e) => setValue("serverPort", e.currentTarget.value)}
                   class="mt-1 w-full px-2.5 py-1.5 text-sm bg-background border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border data-[error=true]:border-destructive"
                   placeholder="3100"
@@ -211,11 +211,11 @@ export function SettingsModal({
               <label class="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={(config.appearance || "dark") === "dark"}
+                  checked={(cfg.appearance || "dark") === "dark"}
                   onChange={() => {
                     setValue(
                       "appearance",
-                      config.appearance === "dark" ? "light" : "dark",
+                      cfg.appearance === "dark" ? "light" : "dark",
                     )
                     onToggleTheme()
                   }}

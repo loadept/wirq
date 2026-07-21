@@ -26,7 +26,7 @@ type App struct {
 func NewApp(appName string) (*App, error) {
 	path, err := configPath(appName)
 	if err != nil {
-		return nil, fmt.Errorf("could not resolve config path: %v", err)
+		return nil, fmt.Errorf("could not resolve config path: %w", err)
 	}
 
 	return &App{

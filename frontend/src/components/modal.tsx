@@ -19,9 +19,13 @@ export const Modal = ({
   const titleId = `modal-title-${title.replace(/\s+/g, "-").toLowerCase()}`
 
   useEffect(() => {
-    if (!onClose) return
+    if (!onClose) {
+      return
+    }
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (e.key === "Escape") {
+        onClose()
+      }
     }
     document.addEventListener("keydown", handler)
     return () => document.removeEventListener("keydown", handler)

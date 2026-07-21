@@ -9,6 +9,7 @@ function useLogDetail(logId: number) {
   useEffect(() => {
     let canceled = false
     setDetail(null)
+    setError(null)
 
     ;(async () => {
       try {

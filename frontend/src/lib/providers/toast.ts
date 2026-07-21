@@ -1,7 +1,13 @@
 import type { ComponentChildren } from "preact"
 import { createContext, h as jsx } from "preact"
 import { createPortal } from "preact/compat"
-import { useCallback, useContext, useRef, useState } from "preact/hooks"
+import {
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "preact/hooks"
 import type { Toast, ToastContextValue, ToastType } from "../../types"
 
 const ToastContext = createContext<ToastContextValue>({
@@ -41,10 +47,12 @@ export function ToastProvider({ children }: { children: ComponentChildren }) {
     [removeToast],
   )
 
+  const contextValue = useMemo(() => ({ addToast }), [addToast])
+
   return createPortal(
     jsx(
       ToastContext.Provider,
-      { value: { addToast } },
+      { value: contextValue },
       children,
       jsx(
         "div",

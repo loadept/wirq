@@ -66,7 +66,9 @@ func (m *Manager) Stop() error {
 	shutCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := m.server.Shutdown(shutCtx); err != nil {
+	err := m.server.Shutdown(shutCtx)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		m.server = nil
 		return fmt.Errorf("could not stop server: %w", err)
 	}
 	m.server = nil

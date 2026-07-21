@@ -95,7 +95,10 @@ func (m *Manager) Write(cfg *ConfigDTO) error {
 		os.Remove(tmpPath)
 		return fmt.Errorf("could not write temp file: %w", err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("could not close temp file: %w", err)
+	}
 
 	if err := os.Rename(tmpPath, m.path); err != nil {
 		os.Remove(tmpPath)
@@ -130,7 +133,7 @@ func (m *Manager) Read() (*ConfigDTO, error) {
 
 	var cfg fileConfig
 	if err := json.Unmarshal(content, &cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse config: %w", err)
 	}
 
 	data := &ConfigDTO{

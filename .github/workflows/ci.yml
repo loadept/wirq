@@ -28,7 +28,13 @@ jobs:
           bun install --frozen-lockfile
           bun run build
 
-      - uses: golangci/golangci-lint-action@v9
+      - name: Run frontend linter
+        run: |
+          cd frontend
+          bun run lint
+
+      - name: Run backend linter
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12
 

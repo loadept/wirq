@@ -93,7 +93,7 @@ jobs:
           cd build/bin
           chmod +x wirq
           tar --remove-files -czvf wirq-linux-amd64.tar.gz wirq
-          sha256sum wirq-linux-amd64.tar.gz wirq-amd64-installer > checksums.txt
+          sha256sum wirq-linux-amd64.tar.gz wirq-amd64-installer.exe > checksums.txt
       
       - name: Create release
         env:
@@ -103,7 +103,7 @@ jobs:
           VERSION="${{ env.VERSION }}"
           gh release create $VERSION \
             wirq-linux-amd64.tar.gz \
-            wirq-amd64-installer \
+            wirq-amd64-installer.exe \
             checksums.txt \
             --title wirq proxy $VERSION
             --generate-notes

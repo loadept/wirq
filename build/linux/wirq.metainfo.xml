@@ -6,7 +6,7 @@
   <name>wirq</name>
   <summary>A local MITM proxy for inspecting HTTP/HTTPS traffic.</summary>
   <description>
-    <p>wirq is a MITM proxy build with Wails and Go for inspact HTTP/HTTPS traffic.</p>
+    <p>wirq is a MITM proxy build with Wails and Go for inspecting HTTP/HTTPS traffic.</p>
   </description>
   <launchable type="desktop-id">wirq.desktop</launchable>
   <url type="homepage">https://github.com/loadept/wirq</url>

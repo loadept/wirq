@@ -102,6 +102,7 @@ jobs:
         run: |
           cd build/bin
           mv wirq.exe wirq-windows-amd64-portable.exe
+          mv wirq-amd64-installer.exe wirq-windows-amd64-installer.exe
           sha256sum wirq-windows-amd64-portable.exe wirq-windows-amd64-installer.exe > checksums-windows.txt
 
       - name: Upload artifacts

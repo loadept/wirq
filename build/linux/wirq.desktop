@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=wirq
-Comment=A local MITM proxy for inspecting HTTP/HTTPS traffic.
+Comment=A local MITM proxy for inspecting HTTP/HTTPS traffic
 Exec=wirq %U
 Icon=wirq
 Terminal=false

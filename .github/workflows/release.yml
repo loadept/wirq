@@ -91,10 +91,9 @@ jobs:
           cd build/bin
           cp ../appicon.png icon.png
           cp ../linux/wirq.desktop wirq.desktop
-          cp ../../README.md README.md
           cp ../../LICENSE LICENSE
           chmod +x wirq
-          tar --remove-files -czvf wirq-linux-amd64.tar.gz wirq icon.png wirq.desktop README.md LICENSE
+          tar --remove-files -czvf wirq-linux-amd64.tar.gz wirq icon.png wirq.desktop LICENSE
           sha256sum wirq-linux-amd64.tar.gz > checksums-linux.txt
 
       - name: Package Windows binary

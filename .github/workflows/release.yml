@@ -54,6 +54,7 @@ jobs:
           echo "makensis: $NSIS_BIN/makensis.exe"
 
       - name: Set version
+        shell: bash
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV

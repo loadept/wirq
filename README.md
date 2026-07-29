@@ -6,16 +6,17 @@
     width="128"
 />
 <h1>wirq</h1>
-<p>
-    A local MITM proxy for inspecting HTTP/HTTPS traffic.
-</p>
+
+**A local MITM proxy for inspecting HTTP/HTTPS traffic.**
+
+[![ci](https://github.com/loadept/wirq/actions/workflows/ci.yml/badge.svg)](https://github.com/loadept/wirq/actions/workflows/ci.yml)
+[![release](https://github.com/loadept/wirq/actions/workflows/release.yml/badge.svg?event=push)](https://github.com/loadept/wirq/actions/workflows/release.yml)
+
 <p>
     <a href="https://wirq.loadept.com">🌐 Homepage</a> &nbsp;|&nbsp;
     <a href="https://github.com/loadept/wirq">💻 GitHub</a> &nbsp;|&nbsp;
     <a href="LICENSE">📄 AGPL-3.0</a>
 </p>
-
-[![ci](https://github.com/loadept/wirq/actions/workflows/ci.yml/badge.svg)](https://github.com/loadept/wirq/actions/workflows/ci.yml)
 
 </div>
 
@@ -30,25 +31,43 @@
 - Dark / light theme
 - Single-instance lock (re-focuses existing window)
 
-## Prerequisites
+## Installation
 
-- [Go](https://go.dev) 1.26+
-- [Bun](https://bun.sh)
-- [Wails CLI v2](https://wails.io) — install with `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
-- **Linux**: requires `webkit2gtk-4.1` (build tag `webkit2_41`)
+### Windows
 
-## Quick start
+Download from [GitHub Releases](https://github.com/loadept/wirq/releases):
+
+| File | Description |
+|---|---|
+| `wirq-amd64-installer.exe` | Installer (adds to Start Menu, Desktop shortcut) |
+| `wirq-portable.exe` | Portable — just run it |
+
+### Linux
+
+**Arch Linux** (recommended):
 
 ```bash
-git clone https://github.com/loadept/wirq
-cd wirq
-
-# Run in development mode (live reload)
-# On Linux: append -tags webkit2_41
-wails dev
+yay -S wirq-bin
+# or
+paru -S wirq-bin
 ```
 
-The app window will open. If no certificates are configured, the settings modal appears automatically. Follow the [Usage Guide](#usage-guide) below to get started.
+**Other distributions** (Linux x86_64 only):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/loadept/wirq/main/scripts/install.sh | bash
+```
+
+*(ARM support coming later)*
+
+### Uninstall
+
+```bash
+sudo rm -rf /opt/wirq
+sudo rm -f /usr/local/bin/wirq \
+         /usr/share/applications/wirq.desktop \
+         /usr/share/pixmaps/wirq.png
+```
 
 ## Usage Guide
 
@@ -239,16 +258,6 @@ Once you have the files, load them into wirq's settings:
 | Cert Path | `$(mkcert -CAROOT)/rootCA.pem` |
 | Cert Key Path | `$(mkcert -CAROOT)/rootCA-key.pem` |
 
-## Development
-
-| Action | Command |
-|---|---|
-| Dev mode (live reload) | `wails dev` (Linux: `wails dev -tags webkit2_41`) |
-| Go tests | `gotestsum --format testname -- -race ./internal/...` |
-| Lint / format frontend | `bun run --bun biome check --write frontend/src/` |
-| Frontend standalone (Vite) | `cd frontend && bun run dev` |
-| Add frontend dependency | `cd frontend && bun add <pkg>` |
-
 ## Build
 
 ```bash
@@ -261,6 +270,16 @@ The binary is written to `build/bin/wirq`.
 ```bash
 ./build/bin/wirq --version
 ```
+
+## Development
+
+| Action | Command |
+|---|---|
+| Dev mode (live reload) | `wails dev` (Linux: `wails dev -tags webkit2_41`) |
+| Go tests | `gotestsum --format testname -- -race ./internal/...` |
+| Lint / format frontend | `bun run --bun biome check --write frontend/src/` |
+| Frontend standalone (Vite) | `cd frontend && bun run dev` |
+| Add frontend dependency | `cd frontend && bun add <pkg>` |
 
 ## Configuration
 

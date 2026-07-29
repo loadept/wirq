@@ -4,10 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-
 jobs:
-  publish-release:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -29,11 +27,8 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: '1.26'
-      - run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Install wails and go modules
-        run: |
-          go mod download
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install and build frontend
         run: |
@@ -87,23 +82,48 @@ jobs:
           echo "Compile with flags [$BUILD_ARGS]"
           eval wails build $BUILD_ARGS
 
-      - name: Package linux binary
-        shell: bash
+      - name: Package Linux binary
+        if: startsWith(matrix.build.platform, 'linux')
         run: |
           cd build/bin
           chmod +x wirq
           tar --remove-files -czvf wirq-linux-amd64.tar.gz wirq
-          sha256sum wirq-linux-amd64.tar.gz wirq-amd64-installer.exe > checksums.txt
-      
+          sha256sum wirq-linux-amd64.tar.gz > checksums-linux.txt
+
+      - name: Package Windows binary
+        if: startsWith(matrix.build.platform, 'windows')
+        run: |
+          cd build/bin
+          mv wirq.exe wirq-portable.exe
+          sha256sum wirq-portable.exe wirq-amd64-installer.exe > checksums-windows.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.build.name }}
+          path: build/bin/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          merge-multiple: true
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          VERSION="${{ env.VERSION }}"
-          gh release create $VERSION \
+          VERSION="${{ github.ref_name }}"
+          gh release create "$VERSION" \
             wirq-linux-amd64.tar.gz \
+            checksums-linux.txt \
+            checksums-windows.txt \
+            wirq-portable.exe \
             wirq-amd64-installer.exe \
-            checksums.txt \
-            --title wirq proxy $VERSION
+            --title "wirq proxy $VERSION" \
             --generate-notes

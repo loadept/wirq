@@ -1,11 +1,13 @@
 <div align="center">
 
-<img
-    src="https://assets.loadept.com/wirq_logo.svg"
-    alt="wirq"
-    width="128"
-/>
-<h1>wirq</h1>
+<div>
+    <img
+        src="https://assets.loadept.com/wirq_logo.svg"
+        alt="wirq"
+        width="128"
+    />
+    <h1>wirq</h1>
+</div>
 
 **A local MITM proxy for inspecting HTTP/HTTPS traffic.**
 

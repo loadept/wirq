@@ -97,8 +97,8 @@ jobs:
         if: startsWith(matrix.build.platform, 'windows')
         run: |
           cd build/bin
-          mv wirq.exe wirq-portable.exe
-          sha256sum wirq-portable.exe wirq-amd64-installer.exe > checksums-windows.txt
+          mv wirq.exe wirq-windows-amd64-portable.exe
+          sha256sum wirq-windows-amd64-portable.exe wirq-windows-amd64-installer.exe > checksums-windows.txt
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -129,7 +129,7 @@ jobs:
             wirq-linux-amd64.tar.gz \
             checksums-linux.txt \
             checksums-windows.txt \
-            wirq-portable.exe \
-            wirq-amd64-installer.exe \
+            wirq-windows-amd64-portable.exe \
+            wirq-windows-amd64-installer.exe \
             --title "wirq proxy $VERSION" \
             --generate-notes

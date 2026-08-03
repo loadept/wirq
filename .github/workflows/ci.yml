@@ -31,7 +31,7 @@ jobs:
       - name: Run frontend linter
         run: |
           cd frontend
-          bun run lint
+          bun run lint:check
 
       - name: Run backend linter
         uses: golangci/golangci-lint-action@v9

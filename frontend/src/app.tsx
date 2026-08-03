@@ -75,7 +75,7 @@ export const App = () => {
   }
 
   return (
-    <div class="flex flex-col bg-background text-foreground h-screen">
+    <div class="flex flex-col bg-background text-foreground w-full h-screen">
       <Header
         port={config?.serverPort ?? 0}
         connected={connected}
